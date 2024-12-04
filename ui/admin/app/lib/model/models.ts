@@ -59,6 +59,7 @@ export type ModelProvider = EntityMeta & {
 const ModelToProviderMap = {
     "openai-model-provider": [
         "text-embedding-3-small",
+        "text-embedding-3-large",
         "dall-e-3",
         "gpt-4o-mini",
         "gpt-3.5-turbo",

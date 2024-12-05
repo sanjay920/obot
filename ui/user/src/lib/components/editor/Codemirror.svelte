@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
 	import {
 		lineNumbers,
 		highlightActiveLineGutter,
@@ -39,151 +37,40 @@
 	import { EditorState, Transaction } from '@codemirror/state';
 	import { EditorView } from '@codemirror/view';
 	import { LanguageSupport } from '@codemirror/language';
-	import type { EditorFile } from '$lib/stores';
-	import { createEventDispatcher } from 'svelte';
 	import type { Tooltip, TooltipView } from '@codemirror/view';
 	import { showTooltip } from '@codemirror/view';
 	import { StateField } from '@codemirror/state';
-	import { oneDark } from '@codemirror/theme-one-dark';
+	import { githubLight, githubDark } from '@uiw/codemirror-theme-github';
+
 	import { MessageSquareText, CircleHelp } from '$lib/icons';
 	import { darkMode } from '$lib/stores';
+	import Input from '$lib/components/messages/Input.svelte';
+	import type { EditorItem } from '$lib/stores/editor.svelte';
+	import type { InvokeInput } from '$lib/services';
+	import { tick } from 'svelte';
 
 	const cursorTooltipField = StateField.define<readonly Tooltip[]>({
-		create: getExplainTooltip,
+		create: createTooltips,
 		update: updateExplainToolTip,
 		provide: (f) => showTooltip.computeN([f], (state) => state.field(f))
 	});
 
 	let explain = $state<HTMLElement>();
 
-	function newExplainToolTip(state: EditorState): TooltipView {
-		const tooltip = explain?.cloneNode(true) as HTMLElement;
-		const explainButton = tooltip.querySelector('.explain-button');
-		const improveButton = tooltip.querySelector('.improve-button');
-		const improveText = tooltip.querySelector('.improve-text');
-		const improveTextarea = tooltip.querySelector('.improve-textarea') as HTMLTextAreaElement;
-
-		explainButton?.addEventListener('click', () => {
-			dispatch('explain', {
-				explain: {
-					filename: file.name,
-					selection: state
-						.sliceDoc(state.selection.ranges[0].from, state.selection.ranges[0].to)
-						.toString()
-				}
-			});
-			tooltip.classList.add('hidden');
-		});
-
-		improveButton?.addEventListener('click', (e) => {
-			e.preventDefault();
-			explainButton?.classList.add('hidden');
-			improveButton?.classList.add('hidden');
-			improveText?.classList.remove('hidden');
-			improveTextarea?.focus();
-		});
-
-		improveTextarea?.addEventListener('keydown', (e: KeyboardEvent) => {
-			if (e.key !== 'Enter' || e.shiftKey) {
-				return;
-			}
-			e.preventDefault();
-			dispatch('improve', {
-				prompt: improveTextarea.value,
-				improve: {
-					filename: file.name,
-					selection: state
-						.sliceDoc(state.selection.ranges[0].from, state.selection.ranges[0].to)
-						.toString()
-				}
-			});
-			tooltip.remove();
-		});
-
-		return {
-			dom: tooltip,
-			offset: {
-				x: 0,
-				y: 12
-			}
-		};
-	}
-
-	function updateExplainToolTip(tooltips: readonly Tooltip[], tr: Transaction): readonly Tooltip[] {
-		if (!focused) {
-			return [];
-		}
-		if (
-			tooltips.length == 0 ||
-			tr.state.selection.ranges.length != 1 ||
-			tr.state.selection.ranges[0].from == tr.state.selection.ranges[0].to
-		) {
-			return getExplainTooltip(tr.state);
-		}
-
-		const obj = tooltips[0] as object;
-		if ('state' in obj && obj.state instanceof EditorState) {
-			if (
-				obj.state.selection.ranges[0]?.from != tr.state.selection.ranges[0].from ||
-				obj.state.selection.ranges[0]?.to != tr.state.selection.ranges[0].to
-			) {
-				return getExplainTooltip(tr.state);
-			}
-			obj.state = tr.state;
-		}
-		return tooltips;
-	}
-
-	function getExplainTooltip(state: EditorState): readonly Tooltip[] {
-		if (
-			state.selection.ranges.length == 1 &&
-			state.selection.ranges[0].from != state.selection.ranges[0].to
-		) {
-			const tooltip = {
-				pos: state.selection.ranges[0].from,
-				above: true,
-				strictSide: true,
-				create: () => {
-					return newExplainToolTip(state);
-				},
-				state: state,
-				selection: state.selection.ranges[0]
-			} as Tooltip;
-			return [tooltip];
-		}
-		return [];
-	}
-
-	const languages = {
-		js: javascript,
-		java: java,
-		go: go,
-		c: cpp,
-		h: cpp,
-		hpp: cpp,
-		cpp: cpp,
-		css: css,
-		html: html,
-		sql: sql,
-		vue: vue,
-		sass: sass,
-		rs: rust
-	} as Record<string, () => LanguageSupport>;
-
 	interface Props {
-		file: EditorFile;
+		file: EditorItem;
+		onInvoke?: (invoke: InvokeInput) => void | Promise<void>;
+		onFileChanged?: (name: string, contents: string) => void;
 	}
 
-	let { file }: Props = $props();
-
-	let setValue: (value: string) => void | undefined = $state();
+	let { file, onInvoke, onFileChanged }: Props = $props();
 	let lastSetValue = '';
-	let focused = false;
-	let dispatch = createEventDispatcher();
-
-	run(() => {
-		setValue?.(file?.contents);
-	});
+	let focused = $state(false);
+	let ttState: EditorState | undefined = $state();
+	let ttVisible = $state(false);
+	let ttImprove = $state(false);
+	let view: EditorView | undefined = $state();
+	let input = $state<ReturnType<typeof Input>>();
 
 	const basicSetup = (() => [
 		lineNumbers(),
@@ -211,33 +98,92 @@
 		cursorTooltipField
 	])();
 
+	$effect(() => {
+		setValue(file?.contents);
+		if (!focused) {
+			// hide()
+		}
+	});
+
+	function onExplain() {
+		if (ttState) {
+			const selection = ttState.selection.ranges[0];
+			if (selection.from != selection.to) {
+				onInvoke?.({
+					explain: {
+						filename: file.name,
+						selection: ttState.sliceDoc(selection.from, selection.to).toString()
+					}
+				});
+			}
+		}
+		hide();
+	}
+
+	function hide() {
+		ttVisible = false;
+		ttImprove = false;
+	}
+
+	async function onSubmit(input: InvokeInput) {
+		if (ttState) {
+			input.improve = {
+				filename: file.name,
+				selection: ttState
+					.sliceDoc(ttState.selection.ranges[0].from, ttState.selection.ranges[0].to)
+					.toString()
+			};
+			await onInvoke?.(input);
+		}
+		hide();
+	}
+
+	function setValue(newContent: string) {
+		if (lastSetValue === newContent || !view) {
+			return;
+		}
+
+		lastSetValue = newContent;
+		view.dispatch(
+			view.state.update({
+				changes: { from: 0, to: view.state.doc.length, insert: newContent }
+			})
+		);
+	}
+
 	function editor(targetElement: HTMLElement) {
 		const ext = file.name.split('.').pop() || 'js';
+		const languages = {
+			java: java,
+			go: go,
+			c: cpp,
+			h: cpp,
+			hpp: cpp,
+			cpp: cpp,
+			css: css,
+			html: html,
+			sql: sql,
+			vue: vue,
+			sass: sass,
+			rs: rust
+		} as Record<string, () => LanguageSupport>;
+
 		const langExtension = languages[ext] ?? javascript;
 		lastSetValue = file.contents;
 
-		targetElement.addEventListener('focusin', () => {
-			focused = true;
-		});
-		targetElement.addEventListener('focusout', () => {
-			focused = false;
-		});
-
 		const updater = EditorView.updateListener.of((update) => {
 			if (update.docChanged && focused) {
-				dispatch('changed', {
-					name: file.name,
-					contents: update.state.doc.toString()
-				});
+				onFileChanged?.(file.name, update.state.doc.toString());
 			}
 		});
 
 		// initial state is never use because it's immediately replaced by the darkMode subscription
-		// below
+		// below, so the darkmode subscription is real constructor
 		let state: EditorState = EditorState.create({
 			doc: file.contents
 		});
-		const view = new EditorView({
+
+		view = new EditorView({
 			parent: targetElement,
 			state
 		});
@@ -247,58 +193,117 @@
 				doc: state.doc,
 				extensions: [
 					basicSetup,
-					isDarkMode ? oneDark : [],
+					isDarkMode ? githubDark : githubLight,
 					updater,
 					langExtension(),
 					cursorTooltipField
 				]
 			});
-			view.setState(newState);
+			view?.setState(newState);
 			state = newState;
 		});
+	}
 
-		setValue = (newContent) => {
-			if (lastSetValue === newContent) {
-				return;
-			}
-
-			lastSetValue = newContent;
-			view.dispatch(
-				view.state.update({
-					changes: { from: 0, to: view.state.doc.length, insert: newContent }
-				})
-			);
+	function newExplainToolTip(state: EditorState): TooltipView {
+		ttState = state;
+		return {
+			dom: explain ?? document.createElement('div'),
+			offset: {
+				x: 0,
+				y: 12
+			},
+			mount() {
+				ttVisible = true;
+				ttImprove = false;
+			},
+			destroy: hide
 		};
+	}
+
+	function updateExplainToolTip(tooltips: readonly Tooltip[], tr: Transaction): readonly Tooltip[] {
+		if (tooltips.length !== 1) {
+			return createTooltips(tr.state);
+		}
+
+		const obj = tooltips[0] as object;
+		if ('state' in obj && obj.state instanceof EditorState) {
+			if (createTooltips(tr.state).length === 0) {
+				ttState = undefined;
+				hide();
+				return [];
+			} else {
+				obj.state = tr.state;
+				ttState = tr.state;
+			}
+		}
+
+		return tooltips;
+	}
+
+	function createTooltips(state: EditorState): readonly Tooltip[] {
+		if (
+			state.selection.ranges.length == 1 &&
+			state.selection.ranges[0].from != state.selection.ranges[0].to
+		) {
+			const tooltip = {
+				pos: state.selection.ranges[0].from,
+				end: state.selection.ranges[0].to,
+				above: true,
+				strictSide: true,
+				create: () => {
+					return newExplainToolTip(state);
+				},
+				state: state,
+				selection: state.selection.ranges[0]
+			} as Tooltip;
+			return [tooltip];
+		}
+		return [];
 	}
 </script>
 
-<div use:editor class="mt-8"></div>
+<div
+	use:editor
+	onfocusin={() => (focused = true)}
+	onfocusout={() => (focused = false)}
+	class="mx-2 mt-4 border-l-2 border-gray-100 dark:border-gray-900"
+></div>
 
-<template>
-	<div bind:this={explain}>
-		<!-- Two buttons, one for explain and one for enhance -->
-		<div class="flex justify-center">
-			<button
-				class="explain-button hover:bg-ablue2-400 flex h-12 items-center justify-center gap-2 rounded-s bg-blue px-4 py-2 text-white"
-			>
-				<span class="font-bold">Explain</span>
-				<CircleHelp class="h-4 w-4 text-white dark:text-white" />
-			</button>
-			<button
-				class="improve-button border-ablue2-400 hover:bg-ablue2-400 flex h-12 items-center justify-center gap-2 rounded-e border-l bg-blue px-4 py-2 text-white"
-			>
-				<span class="font-bold">Improve</span>
-				<MessageSquareText class="h-4 w-4 text-white dark:text-white" />
-			</button>
-			<button
-				aria-label="Improve"
-				class="improve-text border-ablue2-400 hover:bg-ablue2-400 hidden h-12 items-center justify-center gap-2 rounded-e border-l bg-blue px-2 py-2 text-white"
-			>
-				<textarea
-					placeholder="How would like to improve this?"
-					class="improve-textarea h-8 min-h-8 w-[500px] px-2 pt-1 text-black focus:outline-none"
-				></textarea>
-			</button>
+<div class="absolute flex">
+	<div class="flex rounded-3xl bg-gray-70 shadow-lg" bind:this={explain} class:hidden={!ttVisible}>
+		<button
+			class="flex items-center gap-2 rounded-s-3xl p-4 ps-5 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-900"
+			onclick={onExplain}
+			class:hidden={ttImprove}
+		>
+			<span class="text-sm">Explain</span>
+			<CircleHelp class="h-5 w-5" />
+		</button>
+		<button
+			class="flex items-center gap-2 rounded-e-3xl p-4 pe-5 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-900"
+			onclick={async () => {
+				ttImprove = true;
+				await tick();
+				input?.focus();
+			}}
+			class:hidden={ttImprove}
+		>
+			<span class="text-sm">Improve</span>
+			<MessageSquareText class="h-5 w-5" />
+		</button>
+		<div class:hidden={!ttImprove} class="flex w-full max-w-[700px]">
+			<Input {onSubmit} bind:this={input} placeholder="Instructions..." />
 		</div>
 	</div>
-</template>
+</div>
+
+<style lang="postcss">
+	:global {
+		.ͼ2 .cm-tooltip {
+			@apply border-none;
+		}
+		.cm-focused {
+			outline-style: none !important;
+		}
+	}
+</style>

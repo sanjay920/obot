@@ -1,4 +1,5 @@
-import { Model, ModelManifest, ModelProvider } from "~/lib/model/models";
+import { AvailableModel } from "~/lib/model/availableModels";
+import { Model, ModelManifest } from "~/lib/model/models";
 import { ApiRoutes } from "~/lib/routers/apiRoutes";
 import { request } from "~/lib/service/api/primitives";
 
@@ -27,19 +28,23 @@ getModelById.key = (modelId?: string) => {
     };
 };
 
-async function getModelProviders() {
-    const { data } = await request<{ items?: ModelProvider[] }>({
-        url: ApiRoutes.toolReferences.base({ type: "modelProvider" }).url,
+async function getAvailableModelsByProvider(provider: string) {
+    const { data } = await request<{ data?: AvailableModel[] }>({
+        url: ApiRoutes.models.getAvailableModelsByProvider(provider).url,
     });
 
-    return data.items ?? [];
+    return data.data ?? [];
 }
-getModelProviders.key = () => ({
-    url: ApiRoutes.toolReferences.base({ type: "modelProvider" }).path,
-});
+getAvailableModelsByProvider.key = (provider?: Nullish<string>) => {
+    if (!provider) return null;
+
+    return {
+        url: ApiRoutes.models.getAvailableModelsByProvider(provider).path,
+        provider,
+    };
+};
 
 async function createModel(manifest: ModelManifest) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     const { data } = await request<Model>({
         url: ApiRoutes.models.createModel().url,
         method: "POST",
@@ -50,8 +55,6 @@ async function createModel(manifest: ModelManifest) {
 }
 
 async function updateModel(modelId: string, manifest: ModelManifest) {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     const { data } = await request<Model>({
         url: ApiRoutes.models.updateModel(modelId).url,
         method: "PUT",
@@ -71,7 +74,7 @@ async function deleteModel(modelId: string) {
 export const ModelApiService = {
     getModels,
     getModelById,
-    getModelProviders,
+    getAvailableModelsByProvider,
     createModel,
     updateModel,
     deleteModel,

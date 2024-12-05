@@ -232,6 +232,8 @@ func (h *Handler) ingest(ctx context.Context, client kclient.Client, file *v1.Kn
 	loadTask, err := h.invoker.SystemTask(ctx, thread, system.KnowledgeLoadTool, map[string]any{
 		"input":  inputName,
 		"output": outputFile(file.Spec.FileName),
+	}, invoke.SystemTaskOptions{
+		Env: []string{"OPENAI_MODEL=" + string(types.DefaultModelAliasTypeVision)},
 	})
 	if err != nil {
 		return err

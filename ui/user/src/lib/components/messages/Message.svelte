@@ -28,6 +28,7 @@
 	import { FileText, Pencil } from '$lib/icons';
 	import { toHTMLFromMarkdown } from '$lib/markdown.js';
 	import { currentAssistant } from '$lib/stores';
+	import { Paperclip } from 'lucide-svelte';
 
 	interface Props {
 		msg: Message;
@@ -131,7 +132,7 @@
 			</div>
 			<div class="relative">
 				<div class="whitespace-pre-wrap p-5 font-body text-gray-700 dark:text-gray-300">
-					${msg.file.content.split('\n').splice(0, 6).join('\n')}
+					{msg.file.content.split('\n').splice(0, 6).join('\n')}
 				</div>
 				<div
 					class="absolute bottom-0 z-20 h-24 w-full rounded-3xl bg-gradient-to-b from-transparent to-white dark:to-black"
@@ -143,19 +144,39 @@
 
 {#snippet explain()}
 	{#if msg.explain}
-		<div class="flex items-center gap-1 pb-3 pl-1">
-			<FileText class="h-4 w-4 text-white" />
-			<span>{msg.explain.filename}</span>
+		<div
+			role="none"
+			class="-m-6 -mb-4 mt-2 flex flex-col
+		 divide-y divide-gray-300
+		 rounded-3xl border
+		 border-gray-300 bg-white
+		 text-black shadow-lg
+		   dark:bg-black
+		    dark:text-gray-50"
+		>
+			<div class="flex gap-2 px-5 py-4">
+				<Paperclip />
+				<span>Selection from</span>
+				<button
+					class="font-medium"
+					onclick={() => {
+						if (msg.explain?.filename) {
+							onLoadFile(msg.explain.filename);
+						}
+					}}>{msg.explain.filename}</button
+				>
+			</div>
+			<div class="whitespace-pre-wrap p-5 font-body text-gray-700 dark:text-gray-300">
+				{msg.explain.selection}
+			</div>
 		</div>
-		<pre class="mb-4 overflow-x-auto rounded border-white bg-gray-100 p-4 text-black">{msg.explain
-				.selection}</pre>
 	{/if}
 {/snippet}
 
 {#snippet messageContent()}
 	{#if msg.sent}
-		{@render explain()}
 		{content}
+		{@render explain()}
 	{:else}
 		{@html toHTMLFromMarkdown(content)}
 	{/if}
@@ -164,10 +185,10 @@
 {#snippet oauth()}
 	<a
 		href={msg.oauthURL}
-		class="hover:bg-ablue2-600 hover:dark:bg-ablue2-600 rounded-3xl
-						bg-blue-900
+		class="rounded-3xl bg-blue
 						p-4
-					  text-white"
+						text-white
+					  hover:bg-blue-400"
 		target="_blank"
 		>Authentication is required
 		<span class="underline">click here</span> to log-in using OAuth

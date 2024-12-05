@@ -16,12 +16,11 @@
 </script>
 
 <nav
-	class="fixed z-30 h-28
-w-full bg-transparent bg-gradient-to-b from-white
-via-white/95 dark:bg-transparent dark:bg-gradient-to-b dark:from-black
- dark:via-black/95"
+	class="fixed z-30
+w-full
+via-80%"
 >
-	<div class="px-3 py-3 lg:px-5 lg:pl-3">
+	<div class="bg-white px-3 py-3 dark:bg-black lg:px-5 lg:pl-3">
 		<div class="flex items-center justify-between">
 			<Logo />
 			<div class="flex items-center gap-1 pr-2">

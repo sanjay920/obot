@@ -81,6 +81,13 @@ export interface Message {
 	contentID?: string;
 }
 
+export interface InvokeInput {
+	prompt?: string;
+	explain?: Explain;
+	improve?: Explain;
+	changedFiles?: Record<string, string>;
+}
+
 export interface Explain {
 	filename: string;
 	selection: string;

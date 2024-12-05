@@ -172,6 +172,12 @@ export const ApiRoutes = {
         createModel: () => buildUrl(`/models`),
         updateModel: (modelId: string) => buildUrl(`/models/${modelId}`),
         deleteModel: (modelId: string) => buildUrl(`/models/${modelId}`),
+        getAvailableModels: () => buildUrl("/available-models"),
+        getAvailableModelsByProvider: (provider: string) =>
+            buildUrl(`/available-models/${provider}`),
+    },
+    modelProviders: {
+        getModelProviders: () => buildUrl("/model-providers"),
     },
     defaultModelAliases: {
         base: () => buildUrl("/default-model-aliases"),

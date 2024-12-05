@@ -11,6 +11,8 @@
 			return;
 		}
 		await tasks.remove(taskToDelete.id);
+		EditorService.remove(taskToDelete.id);
+		menu?.open.set(false);
 		taskToDelete = undefined;
 	}
 

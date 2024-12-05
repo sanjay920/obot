@@ -6,13 +6,17 @@ export const ModelUsage = {
     LLM: "llm",
     TextEmbedding: "text-embedding",
     ImageGeneration: "image-generation",
+    Vision: "vision",
+    Other: "other",
 } as const;
 export type ModelUsage = (typeof ModelUsage)[keyof typeof ModelUsage];
 
 const ModelUsageLabels = {
-    [ModelUsage.LLM]: "LLM",
-    [ModelUsage.TextEmbedding]: "Text Embedding",
+    [ModelUsage.LLM]: "Language Model (Chat)",
+    [ModelUsage.TextEmbedding]: "Text Embedding (Knowledge)",
     [ModelUsage.ImageGeneration]: "Image Generation",
+    [ModelUsage.Vision]: "Vision",
+    [ModelUsage.Other]: "Other",
 } as const;
 
 export const getModelUsageLabel = (usage: string) => {
@@ -20,6 +24,37 @@ export const getModelUsageLabel = (usage: string) => {
 
     return ModelUsageLabels[usage as ModelUsage];
 };
+
+export const ModelAlias = {
+    Llm: "llm",
+    LlmMini: "llm-mini",
+    TextEmbedding: "text-embedding",
+    ImageGeneration: "image-generation",
+    Vision: "vision",
+} as const;
+export type ModelAlias = (typeof ModelAlias)[keyof typeof ModelAlias];
+
+const ModelAliasLabels = {
+    [ModelAlias.Llm]: "Language Model (Chat)",
+    [ModelAlias.LlmMini]: "Language Model (Chat - Fast)",
+    [ModelAlias.TextEmbedding]: "Text Embedding (Knowledge)",
+    [ModelAlias.ImageGeneration]: "Image Generation",
+    [ModelAlias.Vision]: "Vision",
+} as const;
+
+export const getModelAliasLabel = (alias: string) => {
+    if (!(alias in ModelAliasLabels)) return alias;
+
+    return ModelAliasLabels[alias as ModelAlias];
+};
+
+export const ModelAliasToUsageMap = {
+    [ModelAlias.Llm]: ModelUsage.LLM,
+    [ModelAlias.LlmMini]: ModelUsage.LLM,
+    [ModelAlias.TextEmbedding]: ModelUsage.TextEmbedding,
+    [ModelAlias.ImageGeneration]: ModelUsage.ImageGeneration,
+    [ModelAlias.Vision]: ModelUsage.Vision,
+} as const;
 
 export type ModelManifest = {
     name?: string;
@@ -31,7 +66,8 @@ export type ModelManifest = {
 
 export type ModelProviderStatus = {
     configured: boolean;
-    missingEnvVars?: string[];
+    requiredConfigurationParameters?: string[];
+    missingConfigurationParameters?: string[];
 };
 
 export type Model = EntityMeta & ModelManifest & ModelProviderStatus;
@@ -44,67 +80,17 @@ export const ModelManifestSchema = z.object({
     usage: z.nativeEnum(ModelUsage),
 });
 
-export type ModelProvider = EntityMeta & {
-    description?: string;
-    builtin: boolean;
-    active: boolean;
-    modelProviderStatus: ModelProviderStatus;
+type ModelProviderManifest = {
     name: string;
-    reference: string;
-    toolType: "modelProvider";
+    toolReference: string;
 };
 
-// note(ryanhopperlowe): these values are hardcoded for now
-// ideally they should come from the backend
-const ModelToProviderMap = {
-    "openai-model-provider": [
-        "text-embedding-3-small",
-        "text-embedding-3-large",
-        "dall-e-3",
-        "gpt-4o-mini",
-        "gpt-3.5-turbo",
-        "text-embedding-ada-002",
-        "gpt-4o",
-    ],
-    "azure-openai-model-provider": [
-        "text-embedding-3-small",
-        "text-embedding-3-large",
-        "dall-e-3",
-        "gpt-4o-mini",
-        "gpt-3.5-turbo",
-        "text-embedding-ada-002",
-        "gpt-4o",
-    ],
-    "anthropic-model-provider": [
-        "claude-3-opus-latest",
-        "claude-3-5-sonnet-latest",
-        "claude-3-5-haiku-latest",
-    ],
-    "ollama-model-provider": ["llama3.2"],
-    "voyage-model-provider": [
-        "voyage-3",
-        "voyage-3-lite",
-        "voyage-finance-2",
-        "voyage-multilingual-2",
-        "voyage-law-2",
-        "voyage-code-2",
-    ],
-};
-
-export const ModelAliasToUsageMap = {
-    llm: ModelUsage.LLM,
-    "llm-mini": ModelUsage.LLM,
-    "text-embedding": ModelUsage.TextEmbedding,
-    "image-generation": ModelUsage.ImageGeneration,
-} as const;
+export type ModelProvider = EntityMeta &
+    ModelProviderManifest &
+    ModelProviderStatus;
 
 export function getModelUsageFromAlias(alias: string) {
     if (!(alias in ModelAliasToUsageMap)) return null;
 
     return ModelAliasToUsageMap[alias as keyof typeof ModelAliasToUsageMap];
-}
-
-export function getModelsForProvider(providerId: string) {
-    if (!providerId || !(providerId in ModelToProviderMap)) return [];
-    return ModelToProviderMap[providerId as keyof typeof ModelToProviderMap];
 }

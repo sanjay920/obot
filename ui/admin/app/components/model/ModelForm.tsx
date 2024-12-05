@@ -12,9 +12,9 @@ import {
     ModelProvider,
     ModelUsage,
     getModelUsageLabel,
-    getModelsForProvider,
 } from "~/lib/model/models";
 import { ModelApiService } from "~/lib/service/api/modelApiService";
+import { ModelProviderApiService } from "~/lib/service/api/modelProviderApiService";
 
 import { ControlledCustomInput } from "~/components/form/controlledInputs";
 import { Button } from "~/components/ui/button";
@@ -39,8 +39,8 @@ export function ModelForm(props: ModelFormProps) {
     const { model, onSubmit } = props;
 
     const { data: modelProviders } = useSWR(
-        ModelApiService.getModelProviders.key(),
-        ModelApiService.getModelProviders
+        ModelProviderApiService.getModelProviders.key(),
+        () => ModelProviderApiService.getModelProviders()
     );
 
     const updateModel = useAsync(ModelApiService.updateModel, {
@@ -76,6 +76,15 @@ export function ModelForm(props: ModelFormProps) {
         defaultValues,
     });
 
+    const getAvailableModels = useSWR(
+        ModelApiService.getAvailableModelsByProvider.key(
+            form.watch("modelProvider")
+        ),
+        ({ provider }) =>
+            ModelApiService.getAvailableModelsByProvider(provider),
+        { revalidateIfStale: false }
+    );
+
     const { loading, submit } = getSubmitInfo();
 
     const handleSubmit = form.handleSubmit((values) =>
@@ -85,8 +94,7 @@ export function ModelForm(props: ModelFormProps) {
     const providerName = (provider: ModelProvider) => {
         let text = provider.name || provider.id;
 
-        if (!provider.modelProviderStatus.configured)
-            text += " (not configured)";
+        if (!provider.configured) text += " (not configured)";
 
         return text;
     };
@@ -110,10 +118,7 @@ export function ModelForm(props: ModelFormProps) {
                                     <SelectItem
                                         key={provider.id}
                                         value={provider.id}
-                                        disabled={
-                                            !provider.modelProviderStatus
-                                                .configured
-                                        }
+                                        disabled={!provider.configured}
                                     >
                                         {providerName(provider)}
                                     </SelectItem>
@@ -129,26 +134,21 @@ export function ModelForm(props: ModelFormProps) {
                     label="Target Model"
                 >
                     {({ field: { ref: _, ...field }, className }) => {
-                        const models = getModelsForProvider(
-                            form.watch("modelProvider")
-                        );
-
                         return (
                             <Select
                                 {...field}
                                 disabled={!form.watch("modelProvider")}
-                                onValueChange={field.onChange}
+                                onValueChange={(value) => {
+                                    field.onChange(value);
+                                    updateUsageFromModel(value);
+                                }}
                             >
                                 <SelectTrigger className={className}>
                                     <SelectValue placeholder="Select a Model" />
                                 </SelectTrigger>
 
                                 <SelectContent>
-                                    {models.map((model) => (
-                                        <SelectItem key={model} value={model}>
-                                            {model}
-                                        </SelectItem>
-                                    ))}
+                                    {getModelOptions()}
                                 </SelectContent>
                             </Select>
                         );
@@ -190,6 +190,50 @@ export function ModelForm(props: ModelFormProps) {
             </form>
         </Form>
     );
+
+    function updateUsageFromModel(value: string) {
+        const model = getAvailableModels.data?.find((m) => m.id === value);
+
+        const usage = model?.metadata?.usage ?? ModelUsage.Other;
+
+        form.setValue("usage", usage);
+    }
+
+    function getModelOptions() {
+        if (getAvailableModels.data) {
+            return getAvailableModels.data.map((model) => (
+                <SelectItem key={model.id} value={model.id}>
+                    {model.id}
+                </SelectItem>
+            ));
+        }
+
+        const options: React.ReactNode[] = [];
+
+        const targetModel = form.watch("targetModel");
+        if (targetModel)
+            options.push(
+                <SelectItem key={targetModel} value={targetModel}>
+                    {targetModel}
+                </SelectItem>
+            );
+
+        if (getAvailableModels.isLoading) {
+            options.push(
+                <SelectItem key="loading" value="loading" disabled>
+                    Loading models...
+                </SelectItem>
+            );
+        } else if (!getAvailableModels.data) {
+            options.push(
+                <SelectItem key="no-models" value="no-models" disabled>
+                    No models available
+                </SelectItem>
+            );
+        }
+
+        return options;
+    }
 
     function getSubmitInfo() {
         if (model) {

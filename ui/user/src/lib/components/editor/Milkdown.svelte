@@ -1,89 +1,285 @@
 <script lang="ts">
-	import { run } from 'svelte/legacy';
-
-	import type { EditorFile } from '$lib/stores';
 	import { Crepe } from '@milkdown/crepe';
 
+	import { commandsCtx } from '@milkdown/kit/core';
 	import '@milkdown/crepe/theme/common/style.css';
-	import '@milkdown/crepe/theme/nord.css';
+	import '@milkdown/crepe/theme/frame.css';
 	import { listener, listenerCtx } from '@milkdown/kit/plugin/listener';
-	import { createEventDispatcher } from 'svelte';
 	import { replaceAll } from '@milkdown/utils';
+	import type { EditorItem } from '$lib/stores/editor.svelte';
+	import type { InvokeInput } from '$lib/services';
+	import type { EditorState } from '@milkdown/prose/state';
+	import type { EditorView } from '@milkdown/prose/view';
+	import { CircleHelp, MessageSquareText } from '$lib/icons';
+	import { tick } from 'svelte';
+	import Input from '$lib/components/messages/Input.svelte';
+	import { Bold, Italic, Strikethrough } from 'lucide-svelte';
+	import { TooltipProvider } from '@milkdown/plugin-tooltip';
+	import { tooltipFactory } from '@milkdown/plugin-tooltip';
+	import { Ctx } from '@milkdown/ctx';
+	import { toggleStrongCommand, toggleEmphasisCommand } from '@milkdown/kit/preset/commonmark';
+	import { toggleStrikethroughCommand } from '@milkdown/kit/preset/gfm';
 
 	interface Props {
-		file: EditorFile;
+		file: EditorItem;
+		onInvoke?: (invoke: InvokeInput) => void | Promise<void>;
+		onFileChanged?: (name: string, contents: string) => void;
 	}
 
-	let { file }: Props = $props();
+	let { file, onFileChanged, onInvoke }: Props = $props();
 
-	let setValue: (value: string) => void | undefined = $state();
-	let lastSetValue = '';
-	let focused = false;
-	const dispatcher = createEventDispatcher();
-
-	run(() => {
-		setValue?.(file?.contents);
+	let ttDiv: HTMLDivElement | undefined = $state();
+	let provider: TooltipProvider | undefined = $derived.by(() => {
+		if (!ttDiv) {
+			return;
+		}
+		const provider = new TooltipProvider({
+			content: ttDiv
+		});
+		provider.onShow = () => {
+			ttVisible = true;
+		};
+		provider.onHide = hide;
+		return provider;
 	});
+	let ttVisible = $state(false);
+	let ttImprove = $state(false);
+	const tooltip = tooltipFactory('otto-tooltip');
+	let input: ReturnType<typeof Input> | undefined = $state();
+	let lastSetValue = '';
+	let focused = $state(false);
+	let crepe: Crepe | undefined = $state();
+	let editorCtx: Ctx;
+	let editorView: EditorView | undefined = $state();
+
+	$effect(() => {
+		setValue(file?.contents);
+		if (!focused && !ttImprove) {
+			// hide()
+		}
+	});
+
+	async function setValue(value: string) {
+		if (lastSetValue === value || !crepe) {
+			return;
+		}
+
+		crepe.editor.action(replaceAll(value));
+		lastSetValue = value;
+	}
+
+	function hide() {
+		ttVisible = false;
+		ttImprove = false;
+	}
+
+	async function onSubmit(input: InvokeInput) {
+		input.improve = {
+			filename: file.name,
+			selection: getSelection()
+		};
+		await onInvoke?.(input);
+		hide();
+	}
+
+	function getSelection(): string {
+		if (!editorView) {
+			return '';
+		}
+		return editorView.state.doc.textBetween(
+			editorView.state.selection.from,
+			editorView.state.selection.to,
+			' '
+		);
+	}
+
+	async function onExplain() {
+		onInvoke?.({
+			explain: {
+				filename: file.name,
+				selection: getSelection()
+			}
+		});
+	}
+
+	async function onBold() {
+		editorCtx?.get(commandsCtx)?.call(toggleStrongCommand.key);
+	}
+
+	async function onItalic() {
+		editorCtx?.get(commandsCtx)?.call(toggleEmphasisCommand.key);
+	}
+
+	async function onStrikethrough() {
+		editorCtx?.get(commandsCtx)?.call(toggleStrikethroughCommand.key);
+	}
+
+	function ttUpdate(updatedView: EditorView, prevState: EditorState) {
+		editorView = updatedView;
+		provider?.update(updatedView, prevState);
+	}
+
+	function ttDestroy() {
+		provider?.destroy();
+		ttVisible = false;
+		ttImprove = false;
+	}
 
 	function editor(node: HTMLElement) {
 		lastSetValue = file.contents;
 
-		node.addEventListener('focusin', () => {
-			focused = true;
-		});
-		node.addEventListener('focusout', () => {
-			focused = false;
-		});
-
-		const crepe = new Crepe({
+		crepe = new Crepe({
 			root: node,
-			defaultValue: file.contents
+			defaultValue: file.contents,
+			features: {
+				[Crepe.Feature.Toolbar]: false
+			}
 		});
 
 		crepe.editor
 			.config((ctx) => {
+				editorCtx = ctx;
+
 				const listener = ctx.get(listenerCtx);
 				listener.markdownUpdated((ctx, markdown, prevMarkdown) => {
-					if (focused && markdown !== prevMarkdown) {
-						dispatcher('changed', {
-							name: file.name,
-							contents: markdown
-						});
+					if (markdown === prevMarkdown) {
+						return;
+					}
+
+					if (onFileChanged) {
+						onFileChanged(file.name, markdown);
+					}
+				});
+
+				ctx.set(tooltip.key, {
+					view: () => {
+						return {
+							update: ttUpdate,
+							destroy: ttDestroy
+						};
 					}
 				});
 			})
-			.use(listener);
+			.use(listener)
+			.use(tooltip);
 
-		crepe.create().then(() => {
-			setValue = (value: string) => {
-				if (lastSetValue === value) {
-					return;
-				}
-
-				lastSetValue = value;
-				crepe.editor.action(replaceAll(value));
-			};
-		});
+		crepe.create();
 
 		return {
-			destroy() {
-				crepe.destroy();
+			destroy: () => {
+				crepe?.destroy();
+				crepe = undefined;
+				lastSetValue = '';
+				ttDiv = undefined;
 			}
 		};
 	}
 </script>
 
-<div class="milkdown-editor" use:editor></div>
+<div use:editor onfocusin={() => (focused = true)} onfocusout={() => (focused = false)}></div>
 
-<style>
-	/* The :global is to get rid of warnings about the selector not being found */
+<div
+	class="absolute flex rounded-3xl bg-gray-70 shadow-lg dark:bg-gray-950"
+	bind:this={ttDiv}
+	class:hidden={!ttVisible}
+>
+	<button
+		class="flex items-center gap-2 rounded-s-3xl !border-none !p-4 ps-5 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-900"
+		onclick={onBold}
+		class:hidden={ttImprove}
+	>
+		<Bold class="h-5 w-5" />
+	</button>
+	<button
+		class="flex items-center gap-2 !p-4 ps-5 hover:bg-gray-100 dark:hover:bg-gray-900"
+		onclick={onItalic}
+		class:hidden={ttImprove}
+	>
+		<Italic class="h-5 w-5" />
+	</button>
+	<button
+		class="flex items-center gap-2 !p-4 ps-5 hover:bg-gray-100 dark:hover:bg-gray-900"
+		onclick={onStrikethrough}
+		class:hidden={ttImprove}
+	>
+		<Strikethrough class="h-5 w-5" />
+	</button>
+	<button
+		class="flex items-center gap-2 !p-4 ps-5 hover:bg-gray-100 dark:hover:bg-gray-900"
+		onclick={onExplain}
+		class:hidden={ttImprove}
+	>
+		<span class="text-sm">Explain</span>
+		<CircleHelp class="h-5 w-5" />
+	</button>
+	<button
+		class="flex items-center gap-2 rounded-e-3xl !p-4 ps-5 hover:bg-gray-100 dark:hover:bg-gray-900"
+		onclick={async () => {
+			ttImprove = true;
+			await tick();
+			input?.focus();
+		}}
+		class:hidden={ttImprove}
+	>
+		<span class="text-sm">Improve</span>
+		<MessageSquareText class="h-5 w-5" />
+	</button>
+	<div class:hidden={!ttImprove} class="flex w-full max-w-[700px]">
+		<Input {onSubmit} bind:this={input} placeholder="Instructions..." />
+	</div>
+</div>
+
+<style lang="postcss">
 	:global {
-		.milkdown-editor .milkdown milkdown-block-handle {
-			display: none;
+		.milkdown milkdown-slash-menu {
+			@apply rounded-3xl border-none shadow-lg outline-none;
 		}
 
-		.milkdown-editor .milkdown .ProseMirror {
-			@apply p-4 pt-0;
+		.milkdown milkdown-slash-menu .tab-group ul li {
+			@apply text-base font-normal;
+		}
+
+		.milkdown milkdown-slash-menu .menu-groups .menu-group li > span {
+			@apply font-normal;
+		}
+
+		.milkdown {
+			--crepe-font-title: 'Poppins', 'ui-sans-serif', 'system-ui', '-apple-system', 'system-ui',
+				'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif',
+				'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+			--crepe-font-default: 'Poppins', 'ui-sans-serif', 'system-ui', '-apple-system', 'system-ui',
+				'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'Noto Sans', 'sans-serif',
+				'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+			--crepe-font-code: 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas',
+				'Liberation Mono', 'Courier New', 'monospace';
+		}
+
+		.milkdown .ProseMirror {
+			@apply px-24 pb-4 pt-0;
+		}
+
+		.dark .milkdown {
+			--crepe-color-background: #000000;
+			--crepe-color-on-background: #e6e6e6;
+			--crepe-color-surface: #121212;
+			--crepe-color-surface-low: #1c1c1c;
+			--crepe-color-on-surface: #d1d1d1;
+			--crepe-color-on-surface-variant: #a9a9a9;
+			--crepe-color-outline: #757575;
+			--crepe-color-primary: #b5b5b5;
+			--crepe-color-secondary: #4d4d4d;
+			--crepe-color-on-secondary: #d6d6d6;
+			--crepe-color-inverse: #e5e5e5;
+			--crepe-color-on-inverse: #2a2a2a;
+			--crepe-color-inline-code: #ff6666;
+			--crepe-color-error: #ff6666;
+			--crepe-color-hover: #232323;
+			--crepe-color-selected: #2f2f2f;
+			--crepe-color-inline-area: #2b2b2b;
+			--crepe-shadow-1: 0px 1px 2px 0px rgba(255, 255, 255, 0.3),
+				0px 1px 3px 1px rgba(255, 255, 255, 0.15);
+			--crepe-shadow-2: 0px 1px 2px 0px rgba(255, 255, 255, 0.3),
+				0px 2px 6px 2px rgba(255, 255, 255, 0.15);
 		}
 	}
 </style>

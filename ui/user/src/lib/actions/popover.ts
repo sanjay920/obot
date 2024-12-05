@@ -33,8 +33,8 @@ export default function popover(opts?: PopoverOptions): Popover {
 		if (!ref || !tooltip) return;
 
 		const selfId = id++;
-		document.addEventListener('toolOpen', (e: CustomEvent<string>) => {
-			if (e.detail !== selfId.toString()) {
+		document.addEventListener('toolOpen', (e: Event) => {
+			if (e instanceof CustomEvent && e.detail !== selfId.toString()) {
 				open.set(false);
 			}
 		});

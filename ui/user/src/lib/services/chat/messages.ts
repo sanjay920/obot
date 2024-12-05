@@ -49,7 +49,11 @@ function reformatInputMessage(msg: Message) {
 			improve?: Explain;
 		};
 		if (input.prompt) {
-			msg.message = [input.prompt];
+			if (input.improve) {
+				msg.message = ['Improve: ', ...input.prompt];
+			} else {
+				msg.message = [input.prompt];
+			}
 		}
 		if (input.explain) {
 			msg.explain = input.explain;

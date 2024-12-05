@@ -4,6 +4,7 @@ import {
 	type Assistants,
 	type CredentialList,
 	type Files,
+	type InvokeInput,
 	type KnowledgeFile,
 	type KnowledgeFiles,
 	type Profile,
@@ -82,7 +83,25 @@ export async function listFiles(assistant: string): Promise<Files> {
 	return files;
 }
 
-export async function invoke(assistant: string, msg: string | object) {
+function cleanInvokeInput(input: string | InvokeInput): InvokeInput | string {
+	if (typeof input === 'string') {
+		return input;
+	}
+	// This is just to make it pretty and send simple prompts if we can
+	if (input.explain || input.improve) {
+		return input;
+	}
+	if (input.changedFiles && Object.keys(input.changedFiles).length !== 0) {
+		return input;
+	}
+	if (input.prompt) {
+		return input.prompt;
+	}
+	return input;
+}
+
+export async function invoke(assistant: string, msg: string | InvokeInput) {
+	msg = cleanInvokeInput(msg);
 	await doPost(`/assistants/${assistant}/invoke`, msg);
 }
 

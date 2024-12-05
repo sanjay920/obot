@@ -35,7 +35,7 @@
 	class="flex w-96 flex-col divide-y
 	divide-gray-200
 	rounded-3xl
-	 bg-gray-70 p-6 shadow-lg dark:divide-gray-700 dark:bg-gray-950"
+	 bg-gray-50 p-6 shadow-md dark:divide-gray-700 dark:bg-gray-950"
 >
 	<div class="mb-4">
 		{title}

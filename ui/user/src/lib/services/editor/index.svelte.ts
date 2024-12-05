@@ -1,9 +1,10 @@
 import items, { type EditorItem } from '$lib/stores/editor.svelte';
 import tasks from '$lib/stores/tasks.svelte';
 import ChatService from '../chat';
-import { type Writable, writable } from 'svelte/store';
+import { get, type Writable, writable } from 'svelte/store';
 
 const visible = writable(false);
+const maxSize = writable(false);
 
 const editor: Editor = {
 	remove,
@@ -11,6 +12,7 @@ const editor: Editor = {
 	load,
 	select,
 	items,
+	maxSize,
 	visible
 };
 
@@ -21,10 +23,16 @@ export interface Editor {
 	init: (assistant: string) => Promise<void>;
 	items: EditorItem[];
 	visible: Writable<boolean>;
+	maxSize: Writable<boolean>;
 }
 
 async function init(assistant: string) {
-	const currentID = window.location.href.split('#editor:')[1];
+	let currentID = window.location.href.split('#editor:')[1];
+	const maxSize = currentID?.search(',maxSize');
+	currentID = currentID?.split(',maxSize')[0];
+	if (maxSize > 0) {
+		editor.maxSize.set(true);
+	}
 	if (currentID && assistant) {
 		return load(assistant, currentID);
 	}
@@ -107,9 +115,12 @@ function select(id: string) {
 			item.selected = true;
 			matched = true;
 			if (typeof window !== 'undefined') {
-				window.location.href = `#editor:${item.id}`;
+				if (get(maxSize)) {
+					window.location.href = `#editor:${item.id},maxSize`;
+				} else {
+					window.location.href = `#editor:${item.id}`;
+				}
 			}
-			console.log('setting visible');
 		} else {
 			item.selected = false;
 		}
@@ -121,11 +132,23 @@ function select(id: string) {
 }
 
 function remove(id: string) {
-	const i = items.findIndex((item) => item.id === id);
-	if (i < 0) {
-		return;
+	for (let i = 0; i < items.length; i++) {
+		if (items[i].id === id) {
+			if (items[i].selected) {
+				if (i > 0) {
+					select(items[i - 1].id);
+				} else if (items.length > 1) {
+					select(items[i + 1].id);
+				}
+				items.splice(i, 1);
+				break;
+			}
+		}
 	}
-	items.splice(i, 1);
+
+	if (items.length === 0) {
+		visible.set(false);
+	}
 }
 
 export default editor;

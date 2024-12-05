@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { currentAssistant } from '$lib/stores';
 	import { ChatService, type Task } from '$lib/services';
-	import { Trash, X } from '$lib/icons';
+	import { Trash } from '$lib/icons';
 	import { Pen } from 'lucide-svelte';
 	import { onDestroy } from 'svelte';
 	import Runs from '$lib/components/tasks/Runs.svelte';
 	import Trigger from '$lib/components/tasks/Trigger.svelte';
 	import Steps from '$lib/components/tasks/Steps.svelte';
+	import Controls from '$lib/components/editor/Controls.svelte';
 
 	interface Props {
 		id: string;
@@ -124,7 +125,7 @@
 		}}
 	/>
 
-	<div class="absolute right-0 top-0 m-2">
+	<div class="absolute right-0 top-0 m-2 flex">
 		<button
 			class="icon-button"
 			onclick={() => {
@@ -136,9 +137,7 @@
 		<button class="icon-button">
 			<Trash class="h-5 w-5" />
 		</button>
-		<button class="icon-button">
-			<X class="h-5 w-5" />
-		</button>
+		<Controls />
 	</div>
 
 	<div class="m-2 grow place-content-end self-end text-gray-300">id: {id}</div>

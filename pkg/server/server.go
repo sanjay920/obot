@@ -21,14 +21,14 @@ func Run(ctx context.Context, c services.Config) error {
 	}
 
 	go func() {
-		c, err := controller.New(svcs)
+		ctrl, err := controller.New(svcs)
 		if err != nil {
 			log.Fatalf("Failed to start controller: %v", err)
 		}
-		if err := c.Start(ctx); err != nil {
+		if err = ctrl.Start(ctx); err != nil {
 			log.Fatalf("Failed to start controller: %v", err)
 		}
-		if err := c.PostStart(ctx); err != nil {
+		if err = ctrl.PostStart(ctx); err != nil {
 			log.Fatalf("Failed to post start controller: %v", err)
 		}
 	}()

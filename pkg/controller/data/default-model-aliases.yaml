@@ -25,7 +25,7 @@ items:
     spec:
       manifest:
         alias: text-embedding
-        model: text-embedding-3-small
+        model: text-embedding-3-large
   - apiVersion: otto.otto8.ai/v1
     kind: DefaultModelAlias
     metadata:

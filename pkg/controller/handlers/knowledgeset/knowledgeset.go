@@ -157,7 +157,7 @@ func (h *Handler) SetEmbeddingModel(req router.Request, _ router.Response) error
 	if err := req.Get(&defaultEmbeddingModel, req.Namespace, string(types.DefaultModelAliasTypeTextEmbedding)); err == nil {
 		ks.Status.TextEmbeddingModel = defaultEmbeddingModel.Spec.Manifest.Model
 	} else if apierrors.IsNotFound(err) {
-		ks.Status.TextEmbeddingModel = "text-embedding-3-small"
+		ks.Status.TextEmbeddingModel = "text-embedding-3-large"
 	} else if err != nil {
 		return err
 	}

@@ -59,6 +59,7 @@ const translateUserFriendlyLabel = (label: string) => {
         "ACORN_AZURE_OPENAI_MODEL_PROVIDER",
         "ACORN_ANTHROPIC_MODEL_PROVIDER",
         "ACORN_OLLAMA_MODEL_PROVIDER",
+        "ACORN_RUBRA_MODEL_PROVIDER",
         "ACORN_VOYAGE_MODEL_PROVIDER",
     ];
 

@@ -34,6 +34,7 @@ const sortModelProviders = (modelProviders: ModelProvider[]) => {
             CommonModelProviderIds.AZURE_OPENAI,
             CommonModelProviderIds.ANTHROPIC,
             CommonModelProviderIds.OLLAMA,
+            CommonModelProviderIds.RUBRA,
             CommonModelProviderIds.VOYAGE,
         ];
         const aIndex = preferredOrder.indexOf(a.id);

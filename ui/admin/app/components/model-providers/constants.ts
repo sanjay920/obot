@@ -88,6 +88,6 @@ export const ModelProviderSensitiveFields: Record<string, boolean | undefined> =
         OBOT_GROQ_MODEL_PROVIDER_API_KEY: true,
 
         // VLLM
-        OBOT_VLLM_MODEL_PROVIDER_ENDPOINT: true,
+        OBOT_VLLM_MODEL_PROVIDER_ENDPOINT: false,
         OBOT_VLLM_MODEL_PROVIDER_API_KEY: true,
     };

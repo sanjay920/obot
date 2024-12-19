@@ -160,7 +160,7 @@
 			<textarea
 				{onkeydown}
 				rows="1"
-				placeholder="Stuff..."
+				placeholder="Instructions..."
 				use:autoHeight
 				id={'step' + step.id}
 				bind:value={currentValue}

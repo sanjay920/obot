@@ -80,6 +80,7 @@ func (in *Thread) DeleteRefs() []Ref {
 		{ObjType: &KnowledgeSource{}, Name: in.Spec.KnowledgeSourceName},
 		{ObjType: &KnowledgeSet{}, Name: in.Spec.KnowledgeSetName},
 		{ObjType: &Workspace{}, Name: in.Spec.WorkspaceName},
+		{ObjType: &Workspace{}, Name: in.Status.WorkspaceName},
 		{ObjType: &OAuthAppLogin{}, Name: in.Spec.OAuthAppLoginName},
 	}
 	for _, name := range in.Spec.FromWorkspaceNames {
@@ -94,6 +95,7 @@ type ThreadStatus struct {
 	LastRunState       gptscriptclient.RunState `json:"lastRunState,omitempty"`
 	WorkflowState      types.WorkflowState      `json:"workflowState,omitempty"`
 	WorkspaceID        string                   `json:"workspaceID,omitempty"`
+	WorkspaceName      string                   `json:"workspaceName,omitempty"`
 	PreviousThreadName string                   `json:"previousThreadName,omitempty"`
 	KnowledgeSetNames  []string                 `json:"knowledgeSetNames,omitempty"`
 }

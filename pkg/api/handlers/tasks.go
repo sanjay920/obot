@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
@@ -530,20 +531,9 @@ func (t *TaskHandler) Create(req api.Context) error {
 		return err
 	}
 
-	var workspaces v1.WorkspaceList
-	err = req.List(&workspaces, kclient.MatchingFields{
-		"status.workspaceID": thread.Status.WorkspaceID,
-	})
-	if err != nil {
-		return err
-	}
-
-	if len(workspaces.Items) == 0 {
-		return types.NewErrBadRequest("no workspace found for the thread")
-	}
-
-	if len(workspaces.Items) != 1 {
-		return types.NewErrBadRequest("multiple workspaces found for the thread")
+	var workspace v1.Workspace
+	if err := req.Get(&workspace, thread.Status.WorkspaceName); err != nil {
+		return fmt.Errorf("workspace not found: %w", err)
 	}
 
 	workflowManifest.Alias, err = randomtoken.Generate()
@@ -561,7 +551,7 @@ func (t *TaskHandler) Create(req api.Context) error {
 			ThreadName:        thread.Name,
 			Manifest:          workflowManifest,
 			KnowledgeSetNames: thread.Status.KnowledgeSetNames,
-			WorkspaceName:     workspaces.Items[0].Name,
+			WorkspaceName:     workspace.Name,
 		},
 	}
 

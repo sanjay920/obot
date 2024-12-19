@@ -10,6 +10,7 @@ import (
 
 	"github.com/gptscript-ai/go-gptscript"
 	"github.com/obot-platform/obot/apiclient/types"
+	"github.com/obot-platform/obot/pkg/gz"
 	v1 "github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1"
 	apierror "k8s.io/apimachinery/pkg/api/errors"
 	kclient "sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,7 +52,7 @@ func Agent(ctx context.Context, db kclient.Client, agent *v1.Agent, oauthServerU
 			return nil, nil, fmt.Errorf("invalid env var %s, must match %s", env.Name, validEnv.String())
 		}
 		if env.Value == "" {
-			agent.Spec.Credentials = append(agent.Spec.Credentials,
+			mainTool.Credentials = append(mainTool.Credentials,
 				fmt.Sprintf(`github.com/gptscript-ai/credential as %s with "%s" as message and "%s" as env and %s as field`,
 					env.Name, env.Description, env.Name, env.Name))
 		} else {
@@ -167,6 +168,19 @@ func addKnowledgeTools(ctx context.Context, db kclient.Client, agent *v1.Agent, 
 
 	if len(knowledgeSetNames) == 0 {
 		return extraEnv, nil
+	}
+
+	if thread != nil {
+		var knowledgeSummary v1.KnowledgeSummary
+		if err := db.Get(ctx, kclient.ObjectKeyFromObject(thread), &knowledgeSummary); kclient.IgnoreNotFound(err) != nil {
+			return nil, err
+		} else if err == nil && len(knowledgeSummary.Spec.Summary) > 0 {
+			var content string
+			if err := gz.Decompress(&content, knowledgeSummary.Spec.Summary); err != nil {
+				return nil, err
+			}
+			extraEnv = append(extraEnv, fmt.Sprintf("KNOWLEDGE_SUMMARY=%s", content))
+		}
 	}
 
 	for _, knowledgeSetName := range knowledgeSetNames {

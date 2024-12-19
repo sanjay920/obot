@@ -53,7 +53,7 @@ func cleanInput(filename string) string {
 	return strings.TrimSuffix(path.Join(".conversion", filename), ".md") + ".md" // migration - before, the cleaning step accepted md and outputted md, now it's html -> md
 }
 
-func outputFile(filename string) string {
+func OutputFile(filename string) string {
 	return path.Join(".conversion", filename+".json")
 }
 
@@ -219,7 +219,7 @@ func (h *Handler) ingest(ctx context.Context, client kclient.Client, file *v1.Kn
 
 	loadTask, err := h.invoker.SystemTask(ctx, thread, system.KnowledgeLoadTool, map[string]any{
 		"input":  inputName,
-		"output": outputFile(file.Spec.FileName),
+		"output": OutputFile(file.Spec.FileName),
 	}, invoke.SystemTaskOptions{
 		Env: []string{"OPENAI_MODEL=" + string(types.DefaultModelAliasTypeVision)},
 	})
@@ -243,12 +243,12 @@ func (h *Handler) ingest(ctx context.Context, client kclient.Client, file *v1.Kn
 	}
 
 	ingestTask, err := h.invoker.SystemTask(ctx, thread, system.KnowledgeIngestTool, map[string]any{
-		"input":   outputFile(file.Spec.FileName),
+		"input":   OutputFile(file.Spec.FileName),
 		"dataset": ks.Namespace + "/" + ks.Name,
 		"metadata_json": map[string]string{
 			"url":               file.Spec.URL,
 			"workspaceID":       thread.Status.WorkspaceID,
-			"workspaceFileName": outputFile(file.Spec.FileName),
+			"workspaceFileName": OutputFile(file.Spec.FileName),
 		},
 	}, invoke.SystemTaskOptions{
 		Env:     []string{"OPENAI_EMBEDDING_MODEL=" + ks.Status.TextEmbeddingModel},
@@ -317,7 +317,7 @@ func (h *Handler) Unapproved(req router.Request, _ router.Response) error {
 	}
 
 	task, err := h.invoker.SystemTask(req.Ctx, thread, system.KnowledgeDeleteFileTool, map[string]any{
-		"file":    outputFile(file.Spec.FileName),
+		"file":    OutputFile(file.Spec.FileName),
 		"dataset": ks.Namespace + "/" + ks.Name,
 	})
 	if err != nil {
@@ -375,7 +375,7 @@ func (h *Handler) Cleanup(req router.Request, _ router.Response) error {
 		return err
 	}
 
-	if err := h.gptScript.DeleteFileInWorkspace(req.Ctx, outputFile(file.Spec.FileName), gptscript.DeleteFileInWorkspaceOptions{
+	if err := h.gptScript.DeleteFileInWorkspace(req.Ctx, OutputFile(file.Spec.FileName), gptscript.DeleteFileInWorkspaceOptions{
 		WorkspaceID: workspaceID,
 	}); err != nil {
 		return err
@@ -387,7 +387,7 @@ func (h *Handler) Cleanup(req router.Request, _ router.Response) error {
 	}
 
 	task, err := h.invoker.SystemTask(req.Ctx, thread, system.KnowledgeDeleteFileTool, map[string]any{
-		"file":    outputFile(file.Spec.FileName),
+		"file":    OutputFile(file.Spec.FileName),
 		"dataset": ks.Namespace + "/" + ks.Name,
 	})
 	if err != nil {
@@ -404,7 +404,7 @@ func (h *Handler) Cleanup(req router.Request, _ router.Response) error {
 
 func isFileMatchPrefixPattern(filePath string, patterns []string) bool {
 	for _, pattern := range patterns {
-		if strings.HasPrefix(filePath, pattern) {
+		if strings.HasPrefix(strings.TrimPrefix(filePath, "/"), pattern) {
 			return true
 		}
 	}

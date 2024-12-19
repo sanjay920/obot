@@ -139,6 +139,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSourceList":     schema_storage_apis_ottootto8ai_v1_KnowledgeSourceList(ref),
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSourceSpec":     schema_storage_apis_ottootto8ai_v1_KnowledgeSourceSpec(ref),
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSourceStatus":   schema_storage_apis_ottootto8ai_v1_KnowledgeSourceStatus(ref),
+		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummary":        schema_storage_apis_ottootto8ai_v1_KnowledgeSummary(ref),
+		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummaryList":    schema_storage_apis_ottootto8ai_v1_KnowledgeSummaryList(ref),
+		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummarySpec":    schema_storage_apis_ottootto8ai_v1_KnowledgeSummarySpec(ref),
+		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummaryStatus":  schema_storage_apis_ottootto8ai_v1_KnowledgeSummaryStatus(ref),
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.Model":                   schema_storage_apis_ottootto8ai_v1_Model(ref),
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.ModelList":               schema_storage_apis_ottootto8ai_v1_ModelList(ref),
 		"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.ModelSpec":               schema_storage_apis_ottootto8ai_v1_ModelSpec(ref),
@@ -5865,6 +5869,140 @@ func schema_storage_apis_ottootto8ai_v1_KnowledgeSourceStatus(ref common.Referen
 	}
 }
 
+func schema_storage_apis_ottootto8ai_v1_KnowledgeSummary(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummarySpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummaryStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummarySpec", "github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummaryStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_storage_apis_ottootto8ai_v1_KnowledgeSummaryList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummary"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1.KnowledgeSummary", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_storage_apis_ottootto8ai_v1_KnowledgeSummarySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"threadName": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"contentHash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"summary": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "byte",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_storage_apis_ottootto8ai_v1_KnowledgeSummaryStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+			},
+		},
+	}
+}
+
 func schema_storage_apis_ottootto8ai_v1_Model(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -7029,6 +7167,12 @@ func schema_storage_apis_ottootto8ai_v1_ThreadStatus(ref common.ReferenceCallbac
 						},
 					},
 					"workspaceID": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"workspaceName": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",

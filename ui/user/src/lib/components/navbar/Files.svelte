@@ -4,6 +4,7 @@
 	import { ChatService, EditorService } from '$lib/services';
 	import Modal from '$lib/components/Modal.svelte';
 	import Menu from '$lib/components/navbar/Menu.svelte';
+	import { Image } from 'lucide-svelte';
 
 	async function loadFiles() {
 		files.set(await ChatService.listFiles($currentAssistant.id));
@@ -41,7 +42,11 @@
 									menu?.open.set(false);
 								}}
 							>
-								<FileText />
+								{#if file.name.toLowerCase().endsWith('.png')}
+									<Image class="h-5 w-5" />
+								{:else}
+									<FileText class="h-5 w-5" />
+								{/if}
 								<span class="ms-3">{file.name}</span>
 							</button>
 							<button

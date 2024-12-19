@@ -125,7 +125,7 @@
 <div
 	role="none"
 	onkeydown={(e) => e.stopPropagation()}
-	class="relative flex min-h-full flex-col rounded-s-3xl p-5"
+	class="relative flex h-full flex-col rounded-s-3xl p-5"
 >
 	<input
 		class="bg-white text-xl font-semibold outline-none dark:bg-black dark:text-gray-50"
@@ -144,37 +144,39 @@
 		onkeydown={saveOnEnter}
 	/>
 
-	<Trigger
-		{task}
-		{editMode}
-		onChanged={async (t) => {
-			task = t;
-			await save();
-		}}
-	/>
-
-	{#if !editMode}
-		<Runs
-			{id}
-			onSelect={(i) => {
-				selectedRun = i;
+	<div class="overflow-auto">
+		<Trigger
+			{task}
+			{editMode}
+			onChanged={async (t) => {
+				task = t;
+				await save();
 			}}
 		/>
-	{/if}
 
-	<Steps
-		{task}
-		{editMode}
-		{selectedRun}
-		onChanged={async (t) => {
-			task = t;
-			await save();
-		}}
-		save={async (steps) => {
-			task.steps = steps;
-			await save();
-		}}
-	/>
+		{#if !editMode}
+			<Runs
+				{id}
+				onSelect={(i) => {
+					selectedRun = i;
+				}}
+			/>
+		{/if}
+
+		<Steps
+			{task}
+			{editMode}
+			{selectedRun}
+			onChanged={async (t) => {
+				task = t;
+				await save();
+			}}
+			save={async (steps) => {
+				task.steps = steps;
+				await save();
+			}}
+		/>
+	</div>
 
 	<div class="absolute right-0 top-0 m-2 flex">
 		<button

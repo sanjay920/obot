@@ -125,7 +125,7 @@
 						Cancel
 						<LoaderCircle class="h-4 w-4 animate-spin" />
 					{:else}
-						<Play class="h-4 w-4" />
+						Test <Play class="h-4 w-4" />
 					{/if}
 				</button>
 			</div>

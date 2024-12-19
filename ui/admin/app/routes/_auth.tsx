@@ -2,18 +2,25 @@ import { Outlet, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { preload } from "swr";
 
 import { ForbiddenError, UnauthorizedError } from "~/lib/service/api/apiErrors";
+import { ModelProviderApiService } from "~/lib/service/api/modelProviderApiService";
 import { UserService } from "~/lib/service/api/userService";
 
 import { useAuth } from "~/components/auth/AuthContext";
+import { FirstModelProviderBanner } from "~/components/composed/FirstModelProviderBanner";
 import { Error, RouteError, Unauthorized } from "~/components/errors";
 import { HeaderNav } from "~/components/header/HeaderNav";
 import { Sidebar } from "~/components/sidebar";
 import { SignIn } from "~/components/signin/SignIn";
 
 export async function clientLoader() {
-    const me = await preload(UserService.getMe.key(), () =>
-        UserService.getMe()
-    );
+    const promises = await Promise.all([
+        preload(UserService.getMe.key(), () => UserService.getMe()),
+        preload(
+            ModelProviderApiService.getModelProviders.key(),
+            ModelProviderApiService.getModelProviders
+        ),
+    ]);
+    const me = promises[0];
 
     return { me };
 }
@@ -24,6 +31,7 @@ export default function AuthLayout() {
             <Sidebar />
             <div className="flex flex-col flex-grow overflow-hidden">
                 <HeaderNav />
+                <FirstModelProviderBanner />
                 <main className="flex-grow overflow-auto">
                     <Outlet />
                 </main>

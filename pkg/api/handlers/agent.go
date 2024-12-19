@@ -281,6 +281,24 @@ func (a *AgentHandler) ListFiles(req api.Context) error {
 	return listFiles(req.Context(), req, a.gptscript, workspaceName)
 }
 
+func (a *AgentHandler) GetFile(req api.Context) error {
+	var (
+		agentID = req.PathValue("id")
+	)
+
+	var agent v1.Agent
+	if err := req.Get(&agent, agentID); err != nil {
+		return err
+	}
+
+	var workspace v1.Workspace
+	if err := req.Get(&workspace, agent.Status.WorkspaceName); err != nil {
+		return err
+	}
+
+	return getFileInWorkspace(req.Context(), req, a.gptscript, workspace.Status.WorkspaceID, "files/")
+}
+
 func (a *AgentHandler) UploadFile(req api.Context) error {
 	workspaceName, err := a.getWorkspaceName(req, req.PathValue("id"))
 	if err != nil {

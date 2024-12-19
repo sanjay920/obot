@@ -2,16 +2,14 @@
 	import { currentAssistant } from '$lib/stores';
 	import { ChatService, EditorService, type TableList } from '$lib/services';
 	import Menu from '$lib/components/navbar/Menu.svelte';
-	import { Database, Table } from 'lucide-svelte';
+	import { Table } from 'lucide-svelte';
 
 	async function loadTables() {
 		tables = await ChatService.listTables($currentAssistant.id);
 	}
 
 	let menu: ReturnType<typeof Menu>;
-	let tables = $state<TableList>({
-		tables: []
-	});
+	let tables: TableList | undefined = $state()
 </script>
 
 <Menu
@@ -21,11 +19,13 @@
 	onLoad={loadTables}
 >
 	{#snippet icon()}
-		<Database class="h-5 w-5" />
+		<Table class="h-5 w-5" />
 	{/snippet}
 	{#snippet body()}
-		{#if tables.tables.length === 0}
-			<p class="pb-3 pt-6 text-center text-sm text-gray dark:text-gray-300">No files</p>
+		{#if !tables}
+			<p class="pb-3 pt-6 text-center text-sm text-gray dark:text-gray-300">Loading...</p>
+		{:else if !tables.tables || tables.tables.length === 0}
+			<p class="pb-3 pt-6 text-center text-sm text-gray dark:text-gray-300">No tables</p>
 		{:else}
 			<ul class="space-y-4 px-3 py-6 text-sm">
 				{#each tables.tables as table}

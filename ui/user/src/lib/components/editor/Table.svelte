@@ -37,7 +37,7 @@
 				placeholder="Modify table or data"
 				onSubmit={async (i) => {
 					await ChatService.invoke($currentAssistant.id, {
-						prompt: `In the table database '${tableName}' do the following instruction:\n${i.prompt}`
+						prompt: `In the database table '${tableName}' do the following instruction:\n${i.prompt}`
 					});
 				}}
 			/>

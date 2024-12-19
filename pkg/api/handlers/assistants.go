@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -141,13 +143,22 @@ func convertAssistant(agent v1.Agent) types.Assistant {
 	return assistant
 }
 
+var validAgentID = regexp.MustCompile(`^[a-z][a-z0-9-]*[a-z0-9]$`)
+
+func normalizeAgentID(id string) string {
+	if !validAgentID.MatchString(id) {
+		return fmt.Sprintf("%x", sha256.Sum256([]byte(id)))[:12]
+	}
+	return id
+}
+
 func getUserThread(req api.Context, agentID string) (*v1.Thread, error) {
 	id := req.User.GetUID()
 	if id == "" {
 		id = "none"
 	}
 	id = name.SafeConcatNameWithSeparatorAndLength(64, ".", system.ThreadPrefix,
-		agentID, id)
+		normalizeAgentID(agentID), id)
 
 	var thread v1.Thread
 	if err := req.Get(&thread, id); kclient.IgnoreNotFound(err) != nil {
@@ -240,7 +251,9 @@ func (a *AssistantHandler) Events(req api.Context) error {
 
 func (a *AssistantHandler) Files(req api.Context) error {
 	thread, err := getThreadForScope(req)
-	if err != nil {
+	if apierrors.IsNotFound(err) {
+		return req.Write(types.FileList{Items: []types.File{}})
+	} else if err != nil {
 		return err
 	}
 

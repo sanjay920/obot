@@ -9,6 +9,7 @@ import (
 	"github.com/obot-platform/obot/pkg/controller/handlers/knowledgefile"
 	"github.com/obot-platform/obot/pkg/controller/handlers/knowledgeset"
 	"github.com/obot-platform/obot/pkg/controller/handlers/knowledgesource"
+	"github.com/obot-platform/obot/pkg/controller/handlers/knowledgesummary"
 	"github.com/obot-platform/obot/pkg/controller/handlers/oauthapp"
 	"github.com/obot-platform/obot/pkg/controller/handlers/runs"
 	"github.com/obot-platform/obot/pkg/controller/handlers/threads"
@@ -35,6 +36,7 @@ func (c *Controller) setupRoutes() error {
 	webHooks := webhook.New()
 	cronJobs := cronjob.New()
 	oauthLogins := oauthapp.NewLogin(c.services.Invoker, c.services.ServerURL)
+	knowledgesummary := knowledgesummary.NewHandler(c.services.GPTClient)
 
 	// Runs
 	root.Type(&v1.Run{}).FinalizeFunc(v1.RunFinalizer, runs.DeleteRunState)
@@ -47,6 +49,10 @@ func (c *Controller) setupRoutes() error {
 	root.Type(&v1.Thread{}).HandlerFunc(threads.CreateWorkspaces)
 	root.Type(&v1.Thread{}).HandlerFunc(threads.CreateKnowledgeSet)
 	root.Type(&v1.Thread{}).HandlerFunc(threads.WorkflowState)
+	root.Type(&v1.Thread{}).HandlerFunc(knowledgesummary.Summarize)
+
+	// KnowledgeSummary
+	root.Type(&v1.KnowledgeSummary{}).HandlerFunc(cleanup.Cleanup)
 
 	// Workflows
 	root.Type(&v1.Workflow{}).HandlerFunc(workflow.EnsureIDs)

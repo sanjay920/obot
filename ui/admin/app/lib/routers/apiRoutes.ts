@@ -112,6 +112,10 @@ export const ApiRoutes = {
         authenticate: (workflowId: string) =>
             buildUrl(`/workflows/${workflowId}/authenticate`),
     },
+    env: {
+        getEnv: (entityId: string) => buildUrl(`/agents/${entityId}/env`),
+        updateEnv: (entityId: string) => buildUrl(`/agents/${entityId}/env`),
+    },
     threads: {
         base: () => buildUrl("/threads"),
         getById: (threadId: string) => buildUrl(`/threads/${threadId}`),
@@ -129,6 +133,7 @@ export const ApiRoutes = {
         getKnowledge: (threadId: string) =>
             buildUrl(`/threads/${threadId}/knowledge`),
         getFiles: (threadId: string) => buildUrl(`/threads/${threadId}/files`),
+        abortById: (threadId: string) => buildUrl(`/threads/${threadId}/abort`),
     },
     prompt: {
         base: () => buildUrl("/prompt"),

@@ -45,7 +45,7 @@
 									menu?.open.set(false);
 								}}
 							>
-								<CheckSquare />
+								<CheckSquare class="h-5 w-5"/>
 								<span class="ms-3">{task.name}</span>
 							</button>
 							<button

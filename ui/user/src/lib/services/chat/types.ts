@@ -244,7 +244,7 @@ export interface TaskRunList {
 }
 
 export interface TableList {
-	tables: Table[];
+	tables?: Table[];
 }
 
 export interface Table {

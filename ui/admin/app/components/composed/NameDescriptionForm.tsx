@@ -68,24 +68,25 @@ export function NameDescriptionForm({
                         key={field.id}
                     >
                         <ControlledInput
+                            placeholder="Name"
                             {...nameFieldProps}
                             control={form.control}
                             name={`params.${i}.name`}
-                            placeholder="Name"
                             classNames={{ wrapper: "flex-auto bg-background" }}
                         />
 
                         <ControlledInput
+                            placeholder="Description"
                             {...descriptionFieldProps}
                             control={form.control}
                             name={`params.${i}.description`}
-                            placeholder="Description"
                             classNames={{ wrapper: "flex-auto bg-background" }}
                         />
 
                         <Button
                             variant="ghost"
                             size="icon"
+                            type="button"
                             onClick={() => paramFields.remove(i)}
                         >
                             <TrashIcon />
@@ -97,6 +98,7 @@ export function NameDescriptionForm({
                     variant="ghost"
                     className="self-end"
                     startContent={<PlusIcon />}
+                    type="button"
                     onClick={() =>
                         paramFields.append({ name: "", description: "" })
                     }

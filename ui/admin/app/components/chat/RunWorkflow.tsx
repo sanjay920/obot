@@ -5,12 +5,14 @@ import { WorkflowService } from "~/lib/service/api/workflowService";
 import { cn } from "~/lib/utils";
 
 import { RunWorkflowForm } from "~/components/chat/RunWorkflowForm";
+import { ModelProviderTooltip } from "~/components/model-providers/ModelProviderTooltip";
 import { Button, ButtonProps } from "~/components/ui/button";
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
 } from "~/components/ui/popover";
+import { useModelProviders } from "~/hooks/model-providers/useModelProviders";
 
 type RunWorkflowProps = {
     onSubmit: (params?: Record<string, string>) => void;
@@ -25,7 +27,7 @@ export function RunWorkflow({
     ...props
 }: RunWorkflowProps & ButtonProps) {
     const [open, setOpen] = useState(false);
-
+    const { configured: modelProviderConfigured } = useModelProviders();
     const { data: workflow, isLoading } = useSWR(
         WorkflowService.getWorkflowById.key(workflowId),
         ({ workflowId }) => WorkflowService.getWorkflowById(workflowId)
@@ -33,16 +35,20 @@ export function RunWorkflow({
 
     const params = workflow?.params;
 
-    if (!params || isLoading)
+    if (!params || isLoading || !modelProviderConfigured)
         return (
-            <Button
-                onClick={() => onSubmit()}
-                {...props}
-                disabled={props.disabled || isLoading}
-                loading={isLoading || props.loading}
-            >
-                Run Workflow
-            </Button>
+            <ModelProviderTooltip enabled={modelProviderConfigured}>
+                <Button
+                    onClick={() => onSubmit()}
+                    {...props}
+                    disabled={
+                        props.disabled || isLoading || !modelProviderConfigured
+                    }
+                    loading={isLoading || props.loading}
+                >
+                    Run Workflow
+                </Button>
+            </ModelProviderTooltip>
         );
 
     return (

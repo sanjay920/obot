@@ -58,7 +58,7 @@ func Router(services *services.Services) (http.Handler, error) {
 	mux.HandleFunc("PUT /api/assistants/{id}/tools/{tool}", assistants.AddTool)
 	// Assistant files
 	mux.HandleFunc("GET /api/assistants/{assistant_id}/files", assistants.Files)
-	mux.HandleFunc("GET /api/assistants/{id}/file/{file...}", assistants.GetFile)
+	mux.HandleFunc("GET /api/assistants/{assistant_id}/file/{file...}", assistants.GetFile)
 	mux.HandleFunc("POST /api/assistants/{id}/files/{file...}", assistants.UploadFile)
 	mux.HandleFunc("DELETE /api/assistants/{id}/files/{file...}", assistants.DeleteFile)
 	// Assistant knowledge files
@@ -97,6 +97,7 @@ func Router(services *services.Services) (http.Handler, error) {
 
 	// Agent files
 	mux.HandleFunc("GET /api/agents/{id}/files", agents.ListFiles)
+	mux.HandleFunc("GET /api/agents/{id}/file/{file...}", agents.GetFile)
 	mux.HandleFunc("POST /api/agents/{id}/files/{file}", agents.UploadFile)
 	mux.HandleFunc("DELETE /api/agents/{id}/files/{file}", agents.DeleteFile)
 
@@ -151,6 +152,7 @@ func Router(services *services.Services) (http.Handler, error) {
 
 	// Workflow files
 	mux.HandleFunc("GET /api/workflows/{id}/files", agents.ListFiles)
+	mux.HandleFunc("GET /api/workflows/{id}/file/{file...}", agents.GetFile)
 	mux.HandleFunc("POST /api/workflows/{id}/files/{file}", agents.UploadFile)
 	mux.HandleFunc("DELETE /api/workflows/{id}/files/{file}", agents.DeleteFile)
 
@@ -209,6 +211,12 @@ func Router(services *services.Services) (http.Handler, error) {
 	mux.HandleFunc("DELETE /api/agents/{context}/credentials/{id}", handlers.DeleteCredential)
 	mux.HandleFunc("DELETE /api/workflows/{context}/credentials/{id}", handlers.DeleteCredential)
 	mux.HandleFunc("DELETE /api/credentials/{id}", handlers.DeleteCredential)
+
+	// Environment variable credentials
+	mux.HandleFunc("POST /api/workflows/{id}/env", handlers.SetEnv)
+	mux.HandleFunc("GET /api/workflows/{id}/env", handlers.RevealEnv)
+	mux.HandleFunc("POST /api/agents/{id}/env", handlers.SetEnv)
+	mux.HandleFunc("GET /api/agents/{id}/env", handlers.RevealEnv)
 
 	// Webhooks
 	mux.HandleFunc("POST /api/webhooks", webhooks.Create)

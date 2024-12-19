@@ -1,4 +1,4 @@
-import { LibraryIcon, PlusIcon, WrenchIcon } from "lucide-react";
+import { LibraryIcon, PlusIcon, VariableIcon, WrenchIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 
@@ -12,6 +12,7 @@ import { AgentForm } from "~/components/agent/AgentForm";
 import { AgentPublishStatus } from "~/components/agent/AgentPublishStatus";
 import { PastThreads } from "~/components/agent/PastThreads";
 import { ToolForm } from "~/components/agent/ToolForm";
+import { EnvironmentVariableSection } from "~/components/agent/shared/EnvironmentVariableSection";
 import { AgentKnowledgePanel } from "~/components/knowledge";
 import { Button } from "~/components/ui/button";
 import { CardDescription } from "~/components/ui/card";
@@ -75,7 +76,8 @@ export function Agent({ className, onRefresh }: AgentProps) {
             updateAgent(updatedAgent);
 
             setAgentUpdates(updatedAgent);
-            setLoadingAgentId(updatedAgent.id);
+
+            if (changes.alias) setLoadingAgentId(changes.alias);
         },
         [agentUpdates, updateAgent, agent]
     );
@@ -126,6 +128,19 @@ export function Agent({ className, onRefresh }: AgentProps) {
 
                 <div className="p-4 m-4 space-y-4 lg:mx-6 xl:mx-8">
                     <TypographyH4 className="flex items-center gap-2 border-b pb-2">
+                        <VariableIcon className="w-5 h-5" />
+                        Environment Variables
+                    </TypographyH4>
+
+                    <EnvironmentVariableSection
+                        entity={agent}
+                        onUpdate={partialSetAgent}
+                        entityType="agent"
+                    />
+                </div>
+
+                <div className="p-4 m-4 space-y-4 lg:mx-6 xl:mx-8">
+                    <TypographyH4 className="flex items-center gap-2 border-b pb-2">
                         <LibraryIcon className="w-6 h-6" />
                         Knowledge
                     </TypographyH4>
@@ -138,6 +153,13 @@ export function Agent({ className, onRefresh }: AgentProps) {
                         agentId={agent.id}
                         agent={agent}
                         updateAgent={debouncedSetAgentInfo}
+                        addTool={(tool) => {
+                            if (agent?.tools?.includes(tool)) return;
+
+                            debouncedSetAgentInfo({
+                                tools: [...(agent.tools || []), tool],
+                            });
+                        }}
                     />
                 </div>
             </ScrollArea>

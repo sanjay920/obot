@@ -39,6 +39,8 @@ func AddToSchemeWithGV(scheme *runtime.Scheme, schemeGroupVersion schema.GroupVe
 		&WorkflowExecutionList{},
 		&WorkflowStep{},
 		&WorkflowStepList{},
+		&KnowledgeSummary{},
+		&KnowledgeSummaryList{},
 		&KnowledgeSource{},
 		&KnowledgeSourceList{},
 		&KnowledgeFile{},

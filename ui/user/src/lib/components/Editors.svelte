@@ -8,6 +8,7 @@
 	import Controls from '$lib/components/editor/Controls.svelte';
 	import { currentAssistant } from '$lib/stores';
 	import Image from '$lib/components/editor/Image.svelte';
+	import { CheckSquare, Table as TableIcon, Image as ImageIcon } from 'lucide-svelte';
 
 	function onFileChanged(name: string, contents: string) {
 		for (const item of EditorService.items) {
@@ -40,7 +41,15 @@
 							class="active group flex rounded-3xl bg-gray-70 px-4 py-3 text-black dark:bg-gray-950 dark:text-gray-50"
 						>
 							<div class="flex flex-1 items-center gap-2 ps-2">
-								<FileText class="h-5 w-5" />
+								{#if item.table}
+									<TableIcon class="h-5 w-5" />
+								{:else if item.task}
+									<CheckSquare class="h-5 w-5" />
+								{:else if item.name.toLowerCase().endsWith('.png')}
+									<ImageIcon class="h-5 w-5" />
+								{:else}
+									<FileText class="h-5 w-5" />
+								{/if}
 								<span>{item.name}</span>
 							</div>
 							<button

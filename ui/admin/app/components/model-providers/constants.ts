@@ -44,8 +44,7 @@ export const ModelProviderRequiredTooltips: {
     [CommonModelProviderIds.VLLM]: {
         Endpoint:
             "Endpoint for the vLLM OpenAI service (eg. http://localhost:8000)",
-        "Api Key":
-            "VLLM API Key set when starting the vLLM server",
+        "Api Key": "VLLM API Key set when starting the vLLM server",
     },
     [CommonModelProviderIds.AZURE_OPENAI]: {
         Endpoint:

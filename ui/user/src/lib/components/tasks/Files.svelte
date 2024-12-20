@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { FileText } from '$lib/icons';
+	import { FileText, Trash } from '$lib/icons';
 	import { currentAssistant } from '$lib/stores';
 	import { ChatService, EditorService, type Files } from '$lib/services';
-	import { RotateCw } from 'lucide-svelte';
+	import { Download, RotateCw } from 'lucide-svelte';
 	import { onDestroy } from 'svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
 
 	interface Props {
 		taskID: string;
@@ -13,6 +14,7 @@
 
 	let { taskID, runID, running }: Props = $props();
 	let loading = $state(false);
+	let fileToDelete: string | undefined = $state();
 	let interval: number;
 
 	async function loadFiles() {
@@ -25,6 +27,18 @@
 		} finally {
 			loading = false;
 		}
+	}
+
+	async function deleteFile() {
+		if (!fileToDelete) {
+			return;
+		}
+		await ChatService.deleteFile($currentAssistant.id, fileToDelete, {
+			taskID,
+			runID
+		});
+		await loadFiles();
+		fileToDelete = undefined;
 	}
 
 	$effect(() => {
@@ -75,9 +89,35 @@
 							<FileText />
 							<span class="ms-3">{file.name}</span>
 						</button>
+						<button
+							class="ms-2 hidden group-hover:block"
+							onclick={() => {
+								EditorService.download($currentAssistant.id, file.name, {
+									taskID,
+									runID
+								});
+							}}
+						>
+							<Download class="h-5 w-5 text-gray" />
+						</button>
+						<button
+							class="ms-2 hidden group-hover:block"
+							onclick={() => {
+								fileToDelete = file.name;
+							}}
+						>
+							<Trash class="h-5 w-5 text-gray" />
+						</button>
 					</div>
 				</li>
 			{/each}
 		</ul>
 	</div>
 {/if}
+
+<Confirm
+	show={fileToDelete !== undefined}
+	msg={`Are you sure you want to delete ${fileToDelete}?`}
+	onsuccess={deleteFile}
+	oncancel={() => (fileToDelete = undefined)}
+/>

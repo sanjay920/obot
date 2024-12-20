@@ -78,6 +78,7 @@ type WorkflowExecutionSpec struct {
 	WorkspaceName         string `json:"workspaceName,omitempty"`
 	WorkflowGeneration    int64  `json:"workflowGeneration,omitempty"`
 	RunUntilStep          string `json:"runUntilStep,omitempty"`
+	ThreadCredentialScope *bool  `json:"threadCredentialScope,omitempty"`
 }
 
 func (in *WorkflowExecution) DeleteRefs() []Ref {

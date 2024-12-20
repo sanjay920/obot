@@ -1,5 +1,5 @@
-import { Link } from "@remix-run/react";
 import { CircleCheckIcon, CircleSlashIcon } from "lucide-react";
+import { Link } from "react-router";
 
 import { ModelProvider } from "~/lib/model/modelProviders";
 
@@ -42,7 +42,7 @@ export function ModelProviderList({
                                     size="lg"
                                 />
                             </Link>
-                            <div className="text-lg font-semibold">
+                            <div className="text-lg font-semibold text-center">
                                 {modelProvider.name}
                             </div>
 

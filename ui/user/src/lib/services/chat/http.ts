@@ -35,27 +35,7 @@ export async function doDelete(path: string): Promise<unknown> {
 }
 
 export async function doPut(path: string, input?: string | object | Blob): Promise<unknown> {
-	let headers: Record<string, string> | undefined;
-	if (input instanceof Blob) {
-		headers = {
-			'Content-Type': 'application/octet-stream'
-		};
-	} else if (typeof input === 'object') {
-		input = JSON.stringify(input);
-		headers = {
-			'Content-Type': 'application/json'
-		};
-	} else if (input) {
-		headers = {
-			'Content-Type': 'text/plain'
-		};
-	}
-	const resp = await fetch(baseURL + path, {
-		method: 'PUT',
-		headers: headers,
-		body: input
-	});
-	return handleResponse(resp, path);
+	return await doWithBody('PUT', path, input);
 }
 
 async function handleResponse(resp: Response, path: string): Promise<unknown> {
@@ -71,20 +51,37 @@ async function handleResponse(resp: Response, path: string): Promise<unknown> {
 	return resp.text();
 }
 
-export async function doPost(path: string, input: string | object | Blob): Promise<unknown> {
-	let contentType = 'text/plain';
+export async function doWithBody(
+	method: string,
+	path: string,
+	input?: string | object | Blob
+): Promise<unknown> {
+	let headers: Record<string, string> | undefined;
 	if (input instanceof Blob) {
-		contentType = 'application/octet-stream';
+		headers = { 'Content-Type': 'application/octet-stream' };
 	} else if (typeof input === 'object') {
 		input = JSON.stringify(input);
-		contentType = 'application/json';
+		headers = { 'Content-Type': 'application/json' };
+	} else if (input) {
+		headers = { 'Content-Type': 'text/plain' };
 	}
-	const resp = await fetch(baseURL + path, {
-		method: 'POST',
-		headers: {
-			'Content-Type': contentType
-		},
-		body: input
-	});
-	return handleResponse(resp, path);
+	try {
+		const resp = await fetch(baseURL + path, {
+			method: method,
+			headers: headers,
+			body: input
+		});
+		return handleResponse(resp, path);
+	} catch (e) {
+		if (e instanceof Error) {
+			errors.append(e);
+		} else {
+			errors.append(new Error(`${e}`));
+		}
+		throw e;
+	}
+}
+
+export async function doPost(path: string, input: string | object | Blob): Promise<unknown> {
+	return await doWithBody('POST', path, input);
 }

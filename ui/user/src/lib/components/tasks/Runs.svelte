@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { Info, Play } from 'lucide-svelte';
-	import { ChatService, type TaskRun } from '$lib/services';
+	import { Info, OctagonX, Play, X } from 'lucide-svelte';
+	import { ChatService, type Task, type TaskRun } from '$lib/services';
 	import { onDestroy } from 'svelte';
 	import { currentAssistant } from '$lib/stores';
 	import { Trash } from '$lib/icons';
 	import { formatTime } from '$lib/time';
-	import Modal from '$lib/components/Modal.svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
+	import Input from '$lib/components/tasks/Input.svelte';
 
 	interface Props {
 		id: string;
@@ -17,6 +18,9 @@
 	let timeout: number;
 	let selected = $state('');
 	let toDelete: string = $state('');
+	let inputDialog = $state<HTMLDialogElement>();
+	let taskToRun = $state<Task>();
+	let taskInput = $state('');
 
 	onDestroy(() => {
 		if (timeout) {
@@ -52,11 +56,36 @@
 		}
 	}
 
-	async function run() {
+	async function run(withInput?: string) {
+		if (!withInput) {
+			taskToRun = await ChatService.getTask($currentAssistant.id, id);
+			if (taskToRun.onDemand?.params && Object.keys(taskToRun.onDemand.params).length > 0) {
+				inputDialog?.showModal();
+				return;
+			}
+			if (taskToRun.webhook) {
+				inputDialog?.showModal();
+				return;
+			}
+		}
+
+		inputDialog?.close();
 		if ($currentAssistant.id && id) {
-			const newRun = await ChatService.runTask($currentAssistant.id, id);
+			const newRun = await ChatService.runTask($currentAssistant.id, id, {
+				input: withInput
+			});
 			runs = (await ChatService.listTaskRuns($currentAssistant.id, id)).items;
 			await select(newRun.id);
+		}
+	}
+
+	async function abort(runId: string) {
+		if ($currentAssistant.id && id) {
+			await ChatService.abort($currentAssistant.id, {
+				taskID: id,
+				runID: runId
+			});
+			runs = (await ChatService.listTaskRuns($currentAssistant.id, id)).items;
 		}
 	}
 
@@ -81,7 +110,12 @@
 			} else if (input.type === 'webhook') {
 				return input.payload.slice(0, 50);
 			} else if (typeof input === 'object') {
-				return task.input.slice(0, 50);
+				return Object.keys(input)
+					.map((key) => {
+						return `${key}=${input[key]}`;
+					})
+					.join(', ')
+					.slice(0, 50);
 			}
 		} catch {
 			return task.input.slice(0, 50);
@@ -89,12 +123,14 @@
 	}
 </script>
 
-{#snippet runButton()}
+{#snippet runButton(opts?: { input?: string; text?: string })}
 	<button
 		class="flex items-center gap-2 rounded-3xl bg-blue px-5 py-2 text-white hover:bg-blue-400"
-		onclick={run}
+		onclick={() => {
+			run(opts?.input);
+		}}
 	>
-		Run now
+		{opts?.text ?? 'Run now'}
 		<Play class="h-5 w-5" />
 	</button>
 {/snippet}
@@ -102,7 +138,7 @@
 {#if runs.length > 0}
 	<div class="mt-8 rounded-3xl bg-gray-50 p-5 dark:bg-gray-950">
 		<h4 class="mb-3 text-xl font-semibold">Runs</h4>
-		<table class="m-5 text-left">
+		<table class="m-5 w-full text-left">
 			<thead class="font-semibold">
 				<tr>
 					<th class="pb-1 pl-2"> Start </th>
@@ -115,22 +151,24 @@
 				{#each runs as run}
 					<tr class="group hover:cursor-pointer" onclick={() => select(run.id)}>
 						<td
-							class="rounded-s-md pl-2 group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
+							class="rounded-s-md group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
 							class:bg-blue={selected === run.id}
 						>
 							{formatTime(run.created)}
 						</td>
 						<td
-							class="pl-6 group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
+							class="group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
 							class:bg-blue={selected === run.id}
 						>
 							{formatInput(run)}
 						</td>
 						<td
-							class="pl-6 group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
+							class="group-hover:bg-gray-100 dark:group-hover:bg-gray-800"
 							class:bg-blue={selected === run.id}
 						>
-							{#if run.startTime && run.endTime}
+							{#if run.error}
+								{run.error.includes('aborted') ? 'Aborted' : run.error}
+							{:else if run.startTime && run.endTime}
 								{Math.round(
 									(new Date(run.endTime).getTime() - new Date(run.startTime).getTime()) / 1000
 								)}s
@@ -141,13 +179,16 @@
 							{/if}
 						</td>
 						<td
-							class="rounded-e-md pl-6 group-hover:bg-gray-100 group-hover:text-gray dark:group-hover:bg-gray-800"
+							class="rounded-e-md group-hover:bg-gray-100 group-hover:text-gray dark:group-hover:bg-gray-800"
 							class:bg-blue={selected === run.id}
 						>
-							<div
-								class="flex items-center gap-2 pl-2 text-gray"
-								class:text-white={selected === run.id}
-							>
+							<div class="flex items-center gap-2 text-gray" class:text-white={selected === run.id}>
+								{#if !run.error && run.startTime && !run.endTime}
+									<button class="flex items-center gap-1" onclick={() => abort(run.id)}>
+										<OctagonX class="h-4 w-4" />
+										Stop
+									</button>
+								{/if}
 								<Info class="h-4 w-4" />
 								<button onclick={() => (toDelete = run.id)}>
 									<Trash class="h-5 w-5" />
@@ -168,7 +209,29 @@
 	</div>
 {/if}
 
-<Modal
+<dialog
+	bind:this={inputDialog}
+	class="relative min-w-[500px] rounded-3xl border-white bg-white p-5 text-black dark:bg-black dark:text-gray-50"
+>
+	<h4 class="text-xl font-semibold">Input Parameters</h4>
+	<Input editMode task={taskToRun} bind:input={taskInput}></Input>
+	<div class="mt-5 flex w-full justify-end">
+		{@render runButton({
+			input: taskInput,
+			text: 'Run'
+		})}
+	</div>
+	<button
+		class="absolute right-0 top-0 p-5 text-sm text-gray dark:text-gray-400"
+		onclick={() => {
+			inputDialog?.close();
+		}}
+	>
+		<X class="h-5 w-5" />
+	</button>
+</dialog>
+
+<Confirm
 	show={toDelete !== ''}
 	msg={`Are you sure you want to delete this task run`}
 	onsuccess={() => {
@@ -181,6 +244,6 @@
 <style lang="postcss">
 	td,
 	th {
-		@apply p-1.5 px-6;
+		@apply p-1.5;
 	}
 </style>

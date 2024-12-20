@@ -56,6 +56,7 @@ type TaskRun struct {
 	Task      TaskManifest `json:"task,omitempty"`
 	StartTime *Time        `json:"startTime,omitempty"`
 	EndTime   *Time        `json:"endTime,omitempty"`
+	Error     string       `json:"error,omitempty"`
 }
 
 type TaskRunList List[TaskRun]

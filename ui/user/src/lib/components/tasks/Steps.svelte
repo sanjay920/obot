@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type Messages, type Task, type TaskStep } from '$lib/services';
+	import { ChatService, type Messages, type Task, type TaskStep } from '$lib/services';
 	import { currentAssistant, errors } from '$lib/stores';
 	import { onDestroy } from 'svelte';
 	import Step from '$lib/components/tasks/Step.svelte';
@@ -82,7 +82,10 @@
 
 	async function click() {
 		if (running || pending) {
-			errors.append(new Error('Abort is not implemented for tasks'));
+			return await ChatService.abort($currentAssistant.id, {
+				taskID: task.id,
+				runID: 'editor'
+			});
 		}
 		if (nextStep) {
 			await nextStep.saveAll();

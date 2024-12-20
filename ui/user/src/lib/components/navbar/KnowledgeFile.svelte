@@ -19,7 +19,7 @@
 
 <div class="group flex" use:tt.ref>
 	<button class="flex flex-1 items-center">
-		<FileText class="w-5 h-5"/>
+		<FileText class="h-5 w-5" />
 		<span class="ms-3"
 			>{file.fileName.length > 26 ? file.fileName.slice(0, 26) + '...' : file.fileName}</span
 		>

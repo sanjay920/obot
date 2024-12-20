@@ -33,9 +33,14 @@
 </script>
 
 {#if icon(assistant)}
-	<img src={icon(assistant)} alt="assistant icon" class={twMerge("h-5 w-5", klass)} />
+	<img src={icon(assistant)} alt="assistant icon" class={twMerge('h-5 w-5', klass)} />
 {:else}
-	<div class={twMerge("flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 dark:bg-gray", klass)}>
+	<div
+		class={twMerge(
+			'flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 dark:bg-gray',
+			klass
+		)}
+	>
 		{assistant?.name ? assistant.name[0].toUpperCase() : '?'}
 	</div>
 {/if}

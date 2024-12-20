@@ -44,6 +44,7 @@ func (i *Invoker) Step(ctx context.Context, c kclient.WithWatch, step *v1.Workfl
 		WorkflowExecutionName: wfe.Name,
 		PreviousRunName:       opt.PreviousRunName,
 		ForceNoResume:         opt.PreviousRunName == "",
+		ThreadCredentialScope: wfe.Spec.ThreadCredentialScope,
 	})
 }
 

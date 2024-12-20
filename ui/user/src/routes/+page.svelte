@@ -23,7 +23,7 @@
 		if (id) {
 			goto(`/${id}`);
 		} else if ($loadedAssistants) {
-			window.location.href = '/admin/'
+			window.location.href = '/admin/';
 		}
 	});
 
@@ -46,7 +46,10 @@
 		<a href="https://docs.otto8.ai" class="icon-button" rel="external">
 			<Book />
 		</a>
-		<a href="https://github.com/obot-platform/obot" class="icon-button text-white hover:text-blue-50">
+		<a
+			href="https://github.com/obot-platform/obot"
+			class="icon-button text-white hover:text-blue-50"
+		>
 			{#if $darkMode}
 				<img src="/images/github-mark/github-mark-white.svg" alt="GitHub" class="h-8" />
 			{:else}

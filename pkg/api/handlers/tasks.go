@@ -266,6 +266,7 @@ func (t *TaskHandler) Run(req api.Context) error {
 			WorkflowExecutionName: editorWFE(req, workflow.Name),
 			OwningThreadName:      userThread.Name,
 			StepID:                stepID,
+			ThreadCredentialScope: new(bool),
 		})
 		if err != nil {
 			return err
@@ -288,6 +289,7 @@ func convertTaskRun(workflow *v1.Workflow, wfe *v1.WorkflowExecution) types.Task
 		Task:      convertTaskManifest(wfe.Status.WorkflowManifest),
 		StartTime: types.NewTime(wfe.CreationTimestamp.Time),
 		EndTime:   endTime,
+		Error:     wfe.Status.Error,
 	}
 }
 
@@ -548,10 +550,11 @@ func (t *TaskHandler) Create(req api.Context) error {
 			Namespace:    req.Namespace(),
 		},
 		Spec: v1.WorkflowSpec{
-			ThreadName:        thread.Name,
-			Manifest:          workflowManifest,
-			KnowledgeSetNames: thread.Status.KnowledgeSetNames,
-			WorkspaceName:     workspace.Name,
+			ThreadName:          thread.Name,
+			Manifest:            workflowManifest,
+			KnowledgeSetNames:   thread.Status.KnowledgeSetNames,
+			WorkspaceName:       workspace.Name,
+			CredentialContextID: thread.Name,
 		},
 	}
 

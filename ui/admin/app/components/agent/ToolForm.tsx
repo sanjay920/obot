@@ -124,6 +124,22 @@ export function ToolForm({
             { tool, variant }
         );
 
+    const updateTools = (tools: string[], variant: ToolVariant) => {
+        const removedToolIndexes = toolFields.fields
+            .filter((field) => !tools.includes(field.tool))
+            .map((item) => toolFields.fields.indexOf(item));
+
+        const addedTools = tools.filter(
+            (tool) => !toolFields.fields.some((field) => field.tool === tool)
+        );
+
+        toolFields.remove(removedToolIndexes);
+
+        for (const tool of addedTools) {
+            toolFields.append({ tool, variant });
+        }
+    };
+
     return (
         <Form {...form}>
             <form
@@ -152,13 +168,9 @@ export function ToolForm({
                 <div className="flex justify-end">
                     <ToolCatalogDialog
                         tools={allTools}
-                        onAddTool={(tool) =>
-                            toolFields.append({
-                                tool,
-                                variant: ToolVariant.FIXED,
-                            })
+                        onUpdateTools={(tools) =>
+                            updateTools(tools, ToolVariant.FIXED)
                         }
-                        onRemoveTools={removeTools}
                     />
                 </div>
 
@@ -212,13 +224,9 @@ export function ToolForm({
                 <div className="flex justify-end">
                     <ToolCatalogDialog
                         tools={allTools}
-                        onAddTool={(tool) =>
-                            toolFields.append({
-                                tool,
-                                variant: ToolVariant.DEFAULT,
-                            })
+                        onUpdateTools={(tools) =>
+                            updateTools(tools, ToolVariant.DEFAULT)
                         }
-                        onRemoveTools={removeTools}
                         className="w-auto"
                     />
                 </div>

@@ -22,6 +22,7 @@ type WorkflowOptions struct {
 	StepID                string
 	OwningThreadName      string
 	WorkflowExecutionName string
+	ThreadCredentialScope *bool
 	Events                bool
 }
 
@@ -33,9 +34,10 @@ func (i *Invoker) startWorkflow(ctx context.Context, c kclient.WithWatch, wf *v1
 			Namespace:    wf.Namespace,
 		},
 		Spec: v1.WorkflowExecutionSpec{
-			ThreadName:   opt.OwningThreadName,
-			Input:        input,
-			WorkflowName: wf.Name,
+			ThreadName:            opt.OwningThreadName,
+			Input:                 input,
+			WorkflowName:          wf.Name,
+			ThreadCredentialScope: opt.ThreadCredentialScope,
 		},
 	}
 

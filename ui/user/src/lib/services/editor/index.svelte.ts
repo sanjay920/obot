@@ -9,6 +9,7 @@ const maxSize = writable(false);
 const editor: Editor = {
 	remove,
 	load,
+	download,
 	select,
 	items,
 	maxSize,
@@ -17,6 +18,14 @@ const editor: Editor = {
 
 export interface Editor {
 	load: (
+		assistant: string,
+		id: string,
+		opts?: {
+			taskID?: string;
+			runID?: string;
+		}
+	) => Promise<void>;
+	download: (
 		assistant: string,
 		id: string,
 		opts?: {
@@ -103,6 +112,17 @@ async function loadTask(assistant: string, taskID: string) {
 	} catch {
 		// ignore error
 	}
+}
+
+async function download(assistant: string, id: string, opts?: { taskID?: string; runID?: string }) {
+	const item = items.find((item) => item.id === id);
+	if (item && item.modified && item.buffer) {
+		await ChatService.saveContents(assistant, item.id, item.buffer, opts);
+		item.contents = item.buffer;
+		item.modified = false;
+		item.blob = undefined;
+	}
+	await ChatService.download(assistant, id, opts);
 }
 
 async function loadFile(

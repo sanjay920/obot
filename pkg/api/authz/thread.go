@@ -5,6 +5,9 @@ import (
 	"strings"
 
 	"github.com/gptscript-ai/gptscript/pkg/types"
+	"github.com/obot-platform/nah/pkg/router"
+	v1 "github.com/obot-platform/obot/pkg/storage/apis/otto.otto8.ai/v1"
+	"github.com/obot-platform/obot/pkg/system"
 	"k8s.io/apiserver/pkg/authentication/user"
 )
 
@@ -22,4 +25,56 @@ func authorizeThread(req *http.Request, user user.Info) bool {
 	}
 
 	return false
+}
+
+func (a *Authorizer) authorizeThreadFileDownload(req *http.Request, user user.Info) bool {
+	if req.Method != http.MethodGet {
+		return false
+	}
+
+	if !strings.HasPrefix(req.URL.Path, "/api/threads/") {
+		return false
+	}
+
+	parts := strings.Split(req.URL.Path, "/")
+	if len(parts) < 6 {
+		return false
+	}
+	if parts[0] != "" ||
+		parts[1] != "api" ||
+		parts[2] != "threads" ||
+		parts[4] != "file" {
+		return false
+	}
+
+	var (
+		id     = parts[3]
+		thread v1.Thread
+	)
+	if err := a.storage.Get(req.Context(), router.Key(system.DefaultNamespace, id), &thread); err != nil {
+		return false
+	}
+
+	if thread.Spec.UserUID == user.GetUID() {
+		return true
+	}
+
+	if thread.Spec.WorkflowName == "" {
+		return false
+	}
+
+	var workflow v1.Workflow
+	if err := a.storage.Get(req.Context(), router.Key(thread.Namespace, thread.Spec.WorkflowName), &workflow); err != nil {
+		return false
+	}
+
+	if workflow.Spec.ThreadName == "" {
+		return false
+	}
+
+	if err := a.storage.Get(req.Context(), router.Key(system.DefaultNamespace, workflow.Spec.ThreadName), &thread); err != nil {
+		return false
+	}
+
+	return thread.Spec.UserUID == user.GetUID()
 }

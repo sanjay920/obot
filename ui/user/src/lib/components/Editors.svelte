@@ -9,6 +9,7 @@
 	import { currentAssistant } from '$lib/stores';
 	import Image from '$lib/components/editor/Image.svelte';
 	import { CheckSquare, Table as TableIcon, Image as ImageIcon } from 'lucide-svelte';
+	import { isImage } from '$lib/image';
 
 	function onFileChanged(name: string, contents: string) {
 		for (const item of EditorService.items) {
@@ -45,7 +46,7 @@
 									<TableIcon class="h-5 w-5" />
 								{:else if item.task}
 									<CheckSquare class="h-5 w-5" />
-								{:else if item.name.toLowerCase().endsWith('.png')}
+								{:else if isImage(item.name)}
 									<ImageIcon class="h-5 w-5" />
 								{:else}
 									<FileText class="h-5 w-5" />
@@ -86,7 +87,7 @@
 						file.name = task.name || file.name;
 					}}
 				/>
-			{:else if file.name.toLowerCase().endsWith('.png')}
+			{:else if isImage(file.name)}
 				<Image {file} />
 			{:else}
 				<Codemirror {file} {onFileChanged} {onInvoke} />

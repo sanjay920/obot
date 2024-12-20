@@ -70,6 +70,10 @@ func Workflow(ctx context.Context, c kclient.Client, wf *v1.Workflow, opts Workf
 		},
 	}
 
+	if wf.Spec.CredentialContextID != "" {
+		agent.Spec.CredentialContextID = wf.Spec.CredentialContextID
+	}
+
 	if step := opts.Step; step != nil {
 		if step.Cache != nil {
 			agent.Spec.Manifest.Cache = step.Cache

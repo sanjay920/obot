@@ -1,10 +1,13 @@
 <script lang="ts">
-	import { FileText, Trash } from '$lib/icons';
+	import { FileText, Trash, Upload } from '$lib/icons';
 	import { files, currentAssistant } from '$lib/stores';
-	import { ChatService, EditorService } from '$lib/services';
-	import Modal from '$lib/components/Modal.svelte';
+	import { ChatService, EditorService, type Files } from '$lib/services';
+	import Confirm from '$lib/components/Confirm.svelte';
 	import Menu from '$lib/components/navbar/Menu.svelte';
-	import { Image } from 'lucide-svelte';
+	import { Download, Image } from 'lucide-svelte';
+	import { isImage } from '$lib/image';
+	import Error from '$lib/components/Error.svelte';
+	import Loading from '$lib/icons/Loading.svelte';
 
 	async function loadFiles() {
 		files.set(await ChatService.listFiles($currentAssistant.id));
@@ -21,6 +24,23 @@
 
 	let fileToDelete = $state<string | undefined>();
 	let menu = $state<ReturnType<typeof Menu>>();
+	let fileList = $state<FileList>();
+
+	let uploadInProgress = $state<Promise<Files>>();
+
+	$effect(() => {
+		if (!fileList?.length) {
+			return;
+		}
+
+		uploadInProgress = ChatService.saveFile($currentAssistant.id, fileList[0]);
+		uploadInProgress.finally(() => {
+			uploadInProgress = undefined;
+			loadFiles();
+		});
+
+		fileList = undefined;
+	});
 </script>
 
 <Menu bind:this={menu} title="Files" description="Click to view or edit files" onLoad={loadFiles}>
@@ -42,15 +62,25 @@
 									menu?.open.set(false);
 								}}
 							>
-								{#if file.name.toLowerCase().endsWith('.png')}
+								{#if isImage(file.name)}
 									<Image class="h-5 w-5" />
 								{:else}
 									<FileText class="h-5 w-5" />
 								{/if}
-								<span class="ms-3">{file.name}</span>
+								<span class="ms-3"
+									>{file.name.length > 25 ? file.name.slice(0, 25) + '...' : file.name}</span
+								>
 							</button>
 							<button
-								class="hidden group-hover:block"
+								class="ms-2 hidden group-hover:block"
+								onclick={() => {
+									EditorService.download($currentAssistant.id, file.name);
+								}}
+							>
+								<Download class="h-5 w-5 text-gray" />
+							</button>
+							<button
+								class="ms-2 hidden group-hover:block"
 								onclick={() => {
 									fileToDelete = file.name;
 								}}
@@ -62,10 +92,27 @@
 				{/each}
 			</ul>
 		{/if}
+
+		<div class="flex justify-end">
+			<label
+				class="-mb-3 -mr-3 mt-3 flex cursor-pointer justify-end gap-2 rounded-3xl p-3 px-4 hover:bg-gray-500 hover:text-white"
+			>
+				Upload
+				<input bind:files={fileList} type="file" class="hidden" />
+				{#await uploadInProgress}
+					<Loading class="h-5 w-5" />
+				{:catch error}
+					<Error {error} />
+				{/await}
+				{#if !uploadInProgress}
+					<Upload class="h-5 w-5" />
+				{/if}
+			</label>
+		</div>
 	{/snippet}
 </Menu>
 
-<Modal
+<Confirm
 	show={fileToDelete !== undefined}
 	msg={`Are you sure you want to delete ${fileToDelete}?`}
 	onsuccess={deleteFile}

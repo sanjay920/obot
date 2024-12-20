@@ -31,6 +31,7 @@
 		body: ''
 	});
 	let titlePrefix = $derived(displayRunID !== '' ? '' : 'Test Input ');
+	let readonly = $derived(!!displayRunID);
 
 	$effect(() => {
 		if (task?.onDemand?.params) {
@@ -94,10 +95,10 @@
 						>
 						<input
 							id="param-{key}"
-							readonly={displayRunID !== ''}
+							{readonly}
 							bind:value={params[key]}
 							class="rounded-md bg-gray-50 p-2 outline-none dark:bg-gray-950"
-							placeholder={'Enter value'}
+							placeholder={editMode ? 'Enter value' : 'No value'}
 						/>
 					</div>
 				{/each}
@@ -108,7 +109,7 @@
 						<label for="from" class="w-[70px] text-sm font-semibold">From</label>
 						<input
 							id="from"
-							readonly={displayRunID !== ''}
+							{readonly}
 							bind:value={emailInput.from}
 							class="rounded-md bg-gray-50 p-2 outline-none dark:bg-gray-950"
 							placeholder=""
@@ -118,7 +119,7 @@
 						<label for="from" class="w-[70px] text-sm font-semibold">To</label>
 						<input
 							id="from"
-							readonly={displayRunID !== ''}
+							{readonly}
 							bind:value={emailInput.to}
 							class="rounded-md bg-gray-50 p-2 outline-none dark:bg-gray-950"
 							placeholder=""
@@ -128,7 +129,7 @@
 						<label for="from" class="w-[70px] text-sm font-semibold">Subject</label>
 						<input
 							id="from"
-							readonly={displayRunID !== ''}
+							{readonly}
 							bind:value={emailInput.subject}
 							class="rounded-md bg-gray-50 p-2 outline-none dark:bg-gray-950"
 							placeholder=""
@@ -138,7 +139,7 @@
 						<textarea
 							id="body"
 							bind:value={emailInput.body}
-							readonly={displayRunID !== ''}
+							{readonly}
 							use:autoHeight
 							rows="1"
 							class="mt-2 w-full resize-none rounded-3xl bg-gray-50 p-5 outline-none dark:bg-gray-950"
@@ -151,10 +152,10 @@
 				<textarea
 					bind:value={payload}
 					use:autoHeight
-					readonly={displayRunID !== ''}
+					{readonly}
 					rows="1"
 					class="mt-2 w-full resize-none rounded-md bg-gray-50 p-2 outline-none dark:bg-gray-950"
-					placeholder="Enter payload..."
+					placeholder={editMode ? 'Enter payload...' : 'No payload'}
 				></textarea>
 			{/if}
 		</div>

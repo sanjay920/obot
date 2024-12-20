@@ -1,8 +1,8 @@
-import { useNavigate } from "@remix-run/react";
 import { ColumnDef, createColumnHelper } from "@tanstack/react-table";
 import { PenSquareIcon } from "lucide-react";
 import { useMemo } from "react";
-import { $path } from "remix-routes";
+import { useNavigate } from "react-router";
+import { $path } from "safe-routes";
 import useSWR, { mutate, preload } from "swr";
 
 import { Workflow } from "~/lib/model/workflows";
@@ -66,6 +66,14 @@ export default function Workflows() {
         );
     }, [getThreads.data, getWorkflows.data]);
 
+    const navigateToWorkflow = (workflow: Workflow) => {
+        navigate(
+            $path("/workflows/:workflow", {
+                workflow: workflow.id,
+            })
+        );
+    };
+
     return (
         <div>
             <div className="h-full p-8 flex flex-col gap-4">
@@ -83,13 +91,7 @@ export default function Workflows() {
                         disableClickPropagation={(cell) =>
                             cell.id.includes("action")
                         }
-                        onRowClick={(row) => {
-                            navigate(
-                                $path("/workflows/:workflow", {
-                                    workflow: row.id,
-                                })
-                            );
-                        }}
+                        onRowClick={navigateToWorkflow}
                     />
                 </div>
             </div>
@@ -143,7 +145,13 @@ export default function Workflows() {
 
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button size="icon" variant="ghost">
+                                <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() =>
+                                        navigateToWorkflow(row.original)
+                                    }
+                                >
                                     <PenSquareIcon />
                                 </Button>
                             </TooltipTrigger>

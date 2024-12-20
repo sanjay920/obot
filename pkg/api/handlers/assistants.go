@@ -281,17 +281,13 @@ func (a *AssistantHandler) GetFile(req api.Context) error {
 }
 
 func (a *AssistantHandler) UploadFile(req api.Context) error {
-	var (
-		id = req.PathValue("id")
-	)
-
-	thread, err := getUserThread(req, id)
+	thread, err := getThreadForScope(req)
 	if err != nil {
 		return err
 	}
 
 	if thread.Status.WorkspaceID == "" {
-		return types.NewErrHttp(http.StatusTooEarly, fmt.Sprintf("no workspace found for assistant %s", id))
+		return types.NewErrNotFound("no workspace found")
 	}
 
 	_, err = uploadFileToWorkspace(req.Context(), req, a.gptScript, thread.Status.WorkspaceID, "files/")
@@ -299,11 +295,7 @@ func (a *AssistantHandler) UploadFile(req api.Context) error {
 }
 
 func (a *AssistantHandler) DeleteFile(req api.Context) error {
-	var (
-		id = req.PathValue("id")
-	)
-
-	thread, err := getUserThread(req, id)
+	thread, err := getThreadForScope(req)
 	if err != nil {
 		return err
 	}

@@ -6,7 +6,7 @@
 	import { LoaderCircle, OctagonX, Play, RefreshCcw, Save, Undo } from 'lucide-svelte';
 	import { tick } from 'svelte';
 	import { autoHeight } from '$lib/actions/textarea';
-	import Modal from '$lib/components/Modal.svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
 	import { currentAssistant } from '$lib/stores';
 
 	interface Props {
@@ -255,7 +255,7 @@
 	{/key}
 {/if}
 
-<Modal
+<Confirm
 	show={toDelete !== undefined}
 	msg={`Are you sure you want to delete this step`}
 	onsuccess={deleteStep}

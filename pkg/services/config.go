@@ -217,7 +217,7 @@ func New(ctx context.Context, config Config) (*Services, error) {
 		tokenServer             = &jwt.TokenService{}
 		events                  = events.NewEmitter(storageClient)
 		gatewayClient           = client.New(gatewayDB, config.AuthAdminEmails)
-		invoker                 = invoke.NewInvoker(storageClient, c, client.New(gatewayDB, config.AuthAdminEmails), config.Hostname, tokenServer, events)
+		invoker                 = invoke.NewInvoker(storageClient, c, client.New(gatewayDB, config.AuthAdminEmails), config.Hostname, config.HTTPListenPort, tokenServer, events)
 		modelProviderDispatcher = dispatcher.New(invoker, storageClient, c)
 
 		proxyServer *proxy.Proxy
@@ -265,15 +265,16 @@ func New(ctx context.Context, config Config) (*Services, error) {
 
 	// For now, always auto-migrate the gateway database
 	return &Services{
-		WorkspaceProviderType:      config.WorkspaceProviderType,
-		ServerURL:                  config.Hostname,
-		DevUIPort:                  devPort,
-		ToolRegistryURL:            config.ToolRegistry,
-		Events:                     events,
-		StorageClient:              storageClient,
-		Router:                     r,
-		GPTClient:                  c,
-		APIServer:                  server.NewServer(storageClient, c, authn.NewAuthenticator(authenticators), authz.NewAuthorizer(), proxyServer, config.Hostname),
+		WorkspaceProviderType: config.WorkspaceProviderType,
+		ServerURL:             config.Hostname,
+		DevUIPort:             devPort,
+		ToolRegistryURL:       config.ToolRegistry,
+		Events:                events,
+		StorageClient:         storageClient,
+		Router:                r,
+		GPTClient:             c,
+		APIServer: server.NewServer(storageClient, c, authn.NewAuthenticator(authenticators),
+			authz.NewAuthorizer(storageClient), proxyServer, config.Hostname),
 		TokenServer:                tokenServer,
 		Invoker:                    invoker,
 		AIHelper:                   aihelper.New(c, config.HelperModel),

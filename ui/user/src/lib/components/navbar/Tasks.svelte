@@ -2,7 +2,7 @@
 	import { Plus, Trash } from '$lib/icons';
 	import { tasks, currentAssistant } from '$lib/stores';
 	import { EditorService, type Task } from '$lib/services';
-	import Modal from '$lib/components/Modal.svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
 	import { CheckSquare } from 'lucide-svelte';
 	import Menu from '$lib/components/navbar/Menu.svelte';
 
@@ -45,7 +45,7 @@
 									menu?.open.set(false);
 								}}
 							>
-								<CheckSquare class="h-5 w-5"/>
+								<CheckSquare class="h-5 w-5" />
 								<span class="ms-3">{task.name}</span>
 							</button>
 							<button
@@ -73,7 +73,7 @@
 	{/snippet}
 </Menu>
 
-<Modal
+<Confirm
 	show={taskToDelete !== undefined}
 	msg={`Are you sure you want to delete ${taskToDelete?.name}?`}
 	onsuccess={deleteTask}

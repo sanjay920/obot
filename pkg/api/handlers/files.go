@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -90,7 +89,10 @@ func listKnowledgeFiles(req api.Context, agentName, threadName, knowledgeSetName
 func uploadKnowledgeToWorkspace(req api.Context, gClient *gptscript.GPTScript, ws *v1.Workspace, agentName, threadName, knowledgeSetName string) error {
 	filename := req.PathValue("file")
 
-	size, err := uploadFileToWorkspace(req.Context(), req, gClient, ws.Status.WorkspaceID, "")
+	size, err := uploadFileToWorkspace(req.Context(), req, gClient, ws.Status.WorkspaceID, "", api.BodyOptions{
+		// 100MB
+		MaxBytes: 100 * 1024 * 1024,
+	})
 	if err != nil {
 		return err
 	}
@@ -180,13 +182,13 @@ func getFileInWorkspace(ctx context.Context, req api.Context, gClient *gptscript
 	return err
 }
 
-func uploadFileToWorkspace(ctx context.Context, req api.Context, gClient *gptscript.GPTScript, workspaceID, prefix string) (int, error) {
+func uploadFileToWorkspace(ctx context.Context, req api.Context, gClient *gptscript.GPTScript, workspaceID, prefix string, opts ...api.BodyOptions) (int, error) {
 	file := req.PathValue("file")
 	if file == "" {
 		return 0, fmt.Errorf("file path parameter is required")
 	}
 
-	contents, err := io.ReadAll(req.Request.Body)
+	contents, err := req.Body(opts...)
 	if err != nil {
 		return 0, fmt.Errorf("failed to read request body: %w", err)
 	}

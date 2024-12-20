@@ -6,6 +6,7 @@ import (
 	"slices"
 
 	"k8s.io/apiserver/pkg/authentication/user"
+	kclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -52,16 +53,19 @@ var staticRules = map[string][]string{
 		"POST /api/llm-proxy/",
 		"POST /api/prompt",
 		"GET /api/models",
+		"GET /api/version",
 	},
 }
 
 type Authorizer struct {
-	rules []rule
+	rules   []rule
+	storage kclient.Client
 }
 
-func NewAuthorizer() *Authorizer {
+func NewAuthorizer(storage kclient.Client) *Authorizer {
 	return &Authorizer{
-		rules: defaultRules(),
+		rules:   defaultRules(),
+		storage: storage,
 	}
 }
 
@@ -75,7 +79,11 @@ func (a *Authorizer) Authorize(req *http.Request, user user.Info) bool {
 		}
 	}
 
-	return authorizeThread(req, user)
+	if authorizeThread(req, user) {
+		return true
+	}
+
+	return a.authorizeThreadFileDownload(req, user)
 }
 
 type rule struct {

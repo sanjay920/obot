@@ -9,7 +9,7 @@
 	}
 
 	let menu: ReturnType<typeof Menu>;
-	let tables: TableList | undefined = $state()
+	let tables: TableList | undefined = $state();
 </script>
 
 <Menu

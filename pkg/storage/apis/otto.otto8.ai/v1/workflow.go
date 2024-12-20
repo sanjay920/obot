@@ -67,10 +67,11 @@ func (in *Workflow) SetAliasObservedGeneration(gen int64) {
 }
 
 type WorkflowSpec struct {
-	ThreadName        string                 `json:"threadName,omitempty"`
-	Manifest          types.WorkflowManifest `json:"manifest,omitempty"`
-	KnowledgeSetNames []string               `json:"knowledgeSetNames,omitempty"`
-	WorkspaceName     string                 `json:"workspaceName,omitempty"`
+	ThreadName          string                 `json:"threadName,omitempty"`
+	Manifest            types.WorkflowManifest `json:"manifest,omitempty"`
+	CredentialContextID string                 `json:"credentialContextID,omitempty"`
+	KnowledgeSetNames   []string               `json:"knowledgeSetNames,omitempty"`
+	WorkspaceName       string                 `json:"workspaceName,omitempty"`
 }
 
 func (in *Workflow) DeleteRefs() []Ref {

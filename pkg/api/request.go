@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"slices"
@@ -95,8 +96,27 @@ func (r *Context) Read(obj any) error {
 	return json.Unmarshal(data, obj)
 }
 
-func (r *Context) Body() ([]byte, error) {
-	return io.ReadAll(io.LimitReader(r.Request.Body, 1<<20))
+type BodyOptions struct {
+	MaxBytes int64
+}
+
+func (r *Context) Body(opts ...BodyOptions) (_ []byte, err error) {
+	defer func() {
+		if maxErr := (*http.MaxBytesError)(nil); errors.As(err, &maxErr) {
+			err = types.NewErrHttp(http.StatusRequestEntityTooLarge, "request body too large")
+		}
+		_, _ = io.Copy(io.Discard, r.Request.Body)
+	}()
+	var opt BodyOptions
+	for _, o := range opts {
+		if o.MaxBytes > 0 {
+			opt.MaxBytes = o.MaxBytes
+		}
+	}
+	if opt.MaxBytes == 0 {
+		opt.MaxBytes = 8 * 1024 * 1024
+	}
+	return io.ReadAll(http.MaxBytesReader(r.ResponseWriter, r.Request.Body, opt.MaxBytes))
 }
 
 func (r *Context) WriteCreated(obj any) error {

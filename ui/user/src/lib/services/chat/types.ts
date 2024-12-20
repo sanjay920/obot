@@ -237,6 +237,7 @@ export interface TaskRun {
 	startTime?: string;
 	endTime?: string;
 	input?: string;
+	error?: string;
 }
 
 export interface TaskRunList {

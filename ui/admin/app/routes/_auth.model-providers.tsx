@@ -29,6 +29,7 @@ const sortModelProviders = (modelProviders: ModelProvider[]) => {
             CommonModelProviderIds.OPENAI,
             CommonModelProviderIds.AZURE_OPENAI,
             CommonModelProviderIds.ANTHROPIC,
+            CommonModelProviderIds.ANTHROPIC_BEDROCK,
             CommonModelProviderIds.OLLAMA,
             CommonModelProviderIds.VOYAGE,
             CommonModelProviderIds.GROQ,
@@ -58,8 +59,8 @@ export default function ModelProviders() {
     const sortedModelProviders = sortModelProviders(modelProviders);
     return (
         <div>
-            <div className="relative space-y-10 px-8 pb-8">
-                <div className="sticky top-0 bg-background pt-8 flex flex-col gap-4">
+            <div className="relative px-8 pb-8">
+                <div className="sticky top-0 bg-background py-8 flex flex-col gap-4 z-10">
                     <div className="flex items-center justify-between">
                         <TypographyH2 className="mb-0 pb-0">
                             Model Providers

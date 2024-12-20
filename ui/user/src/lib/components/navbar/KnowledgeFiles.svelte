@@ -2,7 +2,7 @@
 	import { Brain } from '$lib/icons';
 	import { knowledgeFiles, currentAssistant } from '$lib/stores';
 	import { ChatService } from '$lib/services';
-	import Modal from '$lib/components/Modal.svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
 	import KnowledgeFile from './KnowledgeFile.svelte';
 	import KnowledgeUpload from '$lib/components/navbar/KnowledgeUpload.svelte';
 	import Menu from '$lib/components/navbar/Menu.svelte';
@@ -52,7 +52,7 @@
 	{/snippet}
 </Menu>
 
-<Modal
+<Confirm
 	show={fileToDelete !== undefined}
 	msg={`Are you sure you want to delete ${fileToDelete}?`}
 	onsuccess={deleteFile}

@@ -8,7 +8,7 @@
 	import Trigger from '$lib/components/tasks/Trigger.svelte';
 	import Steps from '$lib/components/tasks/Steps.svelte';
 	import Controls from '$lib/components/editor/Controls.svelte';
-	import Modal from '$lib/components/Modal.svelte';
+	import Confirm from '$lib/components/Confirm.svelte';
 
 	interface Props {
 		id: string;
@@ -200,7 +200,7 @@
 	<div class="m-2 grow place-content-end self-end text-gray-300">id: {id}</div>
 </div>
 
-<Modal
+<Confirm
 	show={toDelete}
 	msg={`Are you sure you want to delete this task`}
 	onsuccess={deleteTask}

@@ -42,8 +42,66 @@ export async function deleteKnowledgeFile(assistant: string, filename: string) {
 	return doDelete(`/assistants/${assistant}/knowledge/${filename}`);
 }
 
-export async function deleteFile(assistant: string, filename: string) {
+export async function deleteFile(
+	assistant: string,
+	filename: string,
+	opts?: { taskID?: string; runID?: string }
+) {
+	if (opts?.taskID && opts?.runID) {
+		return doDelete(
+			`/assistants/${assistant}/tasks/${opts.taskID}/runs/${opts.runID}/files/${filename}`
+		);
+	}
 	return doDelete(`/assistants/${assistant}/files/${filename}`);
+}
+
+export async function download(
+	assistant: string,
+	filename: string,
+	opts?: {
+		taskID?: string;
+		runID?: string;
+	}
+) {
+	let url = `/assistants/${assistant}/file/${filename}`;
+	if (opts?.taskID && opts?.runID) {
+		url = `/assistants/${assistant}/tasks/${opts.taskID}/runs/${opts.runID}/file/${filename}`;
+	}
+	url = baseURL + url;
+
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = filename;
+	a.click();
+}
+
+export async function saveFile(
+	assistant: string,
+	file: File,
+	opts?: { taskID?: string; runID?: string }
+) {
+	if (opts?.taskID && opts?.runID) {
+		return (await doPost(
+			`/assistants/${assistant}/tasks/${opts.taskID}/runs/${opts.runID}/file/${file.name}`,
+			file
+		)) as Files;
+	}
+	return (await doPost(`/assistants/${assistant}/file/${file.name}`, file)) as Files;
+}
+
+export async function saveContents(
+	assistant: string,
+	filename: string,
+	contents: string,
+	opts?: { taskID?: string; runID?: string }
+) {
+	if (opts?.taskID && opts?.runID) {
+		return (await doPost(
+			`/assistants/${assistant}/tasks/${opts.taskID}/runs/${opts.runID}/file/${filename}`,
+			contents
+		)) as Files;
+	}
+	return (await doPost(`/assistants/${assistant}/file/${filename}`, contents)) as Files;
 }
 
 export async function getFile(
